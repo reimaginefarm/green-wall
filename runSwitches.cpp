@@ -45,27 +45,29 @@ bool setPWM(uint16_t chan, uint16_t pwm);
 // blank: Used to temporaryly turn off all ports while data is sent (true or false)
 bool write(bool blank);
 
+void setup();
+
 // main gets the arguments from command line when executed
 int main(int argc, char* argv[]) {
 
-    // getting GPIO pins ready to use 
-    wiringPiSetup();
-    pinMode(clk, OUTPUT);
-    pinMode(dat, OUTPUT);
-    pinMode(lat, OUTPUT);
-    pinMode(blank, OUTPUT);
+    // getting GPIO pins ready to use
+    setup();
 
     // using arguments retrieved from command line to run functions
-    b = setPWM(atoi(argv[1]), atoi(argv[2]));
-    cout << "Pins are set: " << std::boolalpha << b << "\n";
-
-    b = write(argv[3]);
-    cout << "Data is transferred: " << std::boolalpha << b << "\n";
+    setPWM(atoi(argv[1]), atoi(argv[2]));
+    write(argv[3]);
 
     return 0;
 }
 
-
+// getting GPIO pins ready to use
+void setup() {
+  wiringPiSetup();
+  pinMode(clk, OUTPUT);
+  pinMode(dat, OUTPUT);
+  pinMode(lat, OUTPUT);
+  pinMode(blank, OUTPUT);
+}
 // store pins and corresponding pwm values
 bool setPWM(uint16_t chan, uint16_t pwm) {
     try {
@@ -75,10 +77,12 @@ bool setPWM(uint16_t chan, uint16_t pwm) {
       pwmbuffer[chan] = pwm;
 
         // return true if everything is OK
+        cout << "Pins are set" << "\n";
         return true;
 
     } catch (const std::exception& e) {
         // return false if there is an error
+        cout << "Pins are not set" << "\n";
         return false;
     }
 
@@ -121,10 +125,12 @@ bool write(bool blank) {
         }
 
         // return true if everything is OK
+        cout << "Data is transferred" << "\n";
         return true;
 
     } catch (const std::exception& e) {
         // return false if there is an error
+        cout << "Data is not transferred" << "\n";
         return false;
     }
 
