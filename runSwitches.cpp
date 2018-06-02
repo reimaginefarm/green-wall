@@ -1,3 +1,6 @@
+// Team NYUAD, Green / Vaponic Wall Code 2018
+// runSwitches.cpp v0.1
+//
 // use the following command to COMPILE:
 // g++ -Wall -o runSwitches runSwitches.cpp -lwiringPi
 //
