@@ -26,12 +26,11 @@
 using std::cout;
 using std::string;
 
-
 // Variable declarations
 uint16_t chan;
 uint16_t pwm;
-uint16_t pwmbuffer[48];
-bool b;
+uint16_t pwmbuffer[48]; // used to store PWM values
+bool b; // used to store the results of the functions
 
 // GPIO pins used to connect the TLC5974 board
 // Check https://pinout.xyz/pinout/wiringpi for correct pin numbers
@@ -74,7 +73,6 @@ bool setPWM(uint16_t chan, uint16_t pwm) {
         return true;
 
     } catch (const std::exception& e) {
-
         // return false if there is an error
         return false;
     }
@@ -121,7 +119,6 @@ bool write(bool blank) {
         return true;
 
     } catch (const std::exception& e) {
-
         // return false if there is an error
         return false;
     }
