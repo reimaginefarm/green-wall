@@ -62,12 +62,14 @@ int main(int argc, char* argv[]) {
 
 // getting GPIO pins ready to use
 void setup() {
-  wiringPiSetup();
-  pinMode(clk, OUTPUT);
-  pinMode(dat, OUTPUT);
-  pinMode(lat, OUTPUT);
-  pinMode(blank, OUTPUT);
+    wiringPiSetup();
+    pinMode(clk, OUTPUT);
+    pinMode(dat, OUTPUT);
+    pinMode(lat, OUTPUT);
+    pinMode(blank, OUTPUT);
 }
+
+
 // store pins and corresponding pwm values
 bool setPWM(uint16_t chan, uint16_t pwm) {
     try {
