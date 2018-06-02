@@ -11,16 +11,34 @@ from signal import pause
 
 import raspiConfig
 
-foggers = list(raspiConfig.fogger.values())
 
-for i in range(4):
-    pin = raspiConfig.fogger[i]['pin']
-    onTime = raspiConfig.fogger[i]['onTime']
-    DigitalOutputDevice(pin).blink(on_time = onTime)
+def main():
 
-pause()
+    #runFoggers()
 
-print(raspiConfig.fogger[3]['onTime'])
+    measureLightLevel()  
+
+    pause()
+
+def measureLightLevel():
+    lightLevel = InputDevice(20)
+    print(lightLevel)
+    return lightLevel
+
+def runFoggers():
+
+    foggers = list(raspiConfig.fogger.values())
+
+    for i in range(4):
+        pin = raspiConfig.fogger[i]['pin']
+        onTime = raspiConfig.fogger[i]['onTime']
+        DigitalOutputDevice(pin).blink(on_time = onTime)
+
+    #print(raspiConfig.fogger[3]['onTime'])
+
+
+main()
+
 
 # The huge comment
 while False:
