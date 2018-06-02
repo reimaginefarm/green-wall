@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+//****************************************************************************//
 // Team NYUAD, Green / Vaponic Wall Code 2018
 // runSwitches.cpp v0.1
 //
@@ -14,7 +14,7 @@
 // sudo ./runSwitches <pin number> <pwm value> <blank state, true or false>
 //
 // For example: sudo ./runSwitches 9 4000 false
-////////////////////////////////////////////////////////////////////////////////
+//****************************************************************************//
 
 // wiringPi is used to use the GPIO pins of raspi
 #include <wiringPi.h>
@@ -24,6 +24,8 @@
 #include <string.h>
 using std::cout;
 using std::string;
+
+
 
 // Variable declarations
 uint16_t chan;
@@ -38,6 +40,8 @@ uint8_t dat = 28; // data / DIN
 uint8_t lat = 29; // latch / LAT
 uint8_t blank = 37; // blank / /OE
 
+
+
 // chan: Channel of the TLC5974 board (from 0 to 23)
 // pwm: PWM value for the specified channel (from 0 to 4095)
 bool setPWM(uint16_t chan, uint16_t pwm);
@@ -46,6 +50,8 @@ bool setPWM(uint16_t chan, uint16_t pwm);
 bool write(bool blank);
 
 void setup();
+
+
 
 // main gets the arguments from command line when executed
 int main(int argc, char* argv[]) {
@@ -59,6 +65,8 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
+
 
 // getting GPIO pins ready to use
 void setup() {
