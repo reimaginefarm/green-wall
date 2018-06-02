@@ -48,7 +48,12 @@ bool write(bool blank);
 // main gets the arguments from command line when executed
 int main(int argc, char* argv[]) {
 
+    // getting GPIO pins ready to use 
     wiringPiSetup();
+    pinMode(clk, OUTPUT);
+    pinMode(dat, OUTPUT);
+    pinMode(lat, OUTPUT);
+    pinMode(blank, OUTPUT);
 
     // using arguments retrieved from command line to run functions
     b = setPWM(atoi(argv[1]), atoi(argv[2]));
