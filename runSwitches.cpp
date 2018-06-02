@@ -45,11 +45,12 @@ bool setPWM(uint16_t chan, uint16_t pwm);
 // blank: Used to temporaryly turn off all ports while data is sent (true or false)
 bool write(bool blank);
 
-
+// main gets the arguments from command line when executed
 int main(int argc, char* argv[]) {
 
     wiringPiSetup();
 
+    // using arguments retrieved from command line to run functions
     b = setPWM(atoi(argv[1]), atoi(argv[2]));
     cout << "Pins are set: " << std::boolalpha << b << "\n";
 
