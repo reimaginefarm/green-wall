@@ -1,14 +1,20 @@
+////////////////////////////////////////////////////////////////////////////////
 // Team NYUAD, Green / Vaponic Wall Code 2018
 // runSwitches.cpp v0.1
 //
-// use the following command to COMPILE:
+// wiringPi library is required to run this code
+// visit http://wiringpi.com/download-and-install/ for installation instructions
+//
+// Inspired by https://github.com/adafruit/Adafruit_TLC5947/blob/master/Adafruit_TLC5947.cpp
+//
+// Use the following command to COMPILE:
 // g++ -Wall -o runSwitches runSwitches.cpp -lwiringPi
 //
-// use the following command to RUN:
+// Use the following command to RUN:
 // sudo ./runSwitches <pin number> <pwm value> <blank state, true or false>
-// for example: sudo ./runSwitches 9 4000 false
-
-// Inspired by https://github.com/adafruit/Adafruit_TLC5947/blob/master/Adafruit_TLC5947.cpp
+//
+// For example: sudo ./runSwitches 9 4000 false
+////////////////////////////////////////////////////////////////////////////////
 
 // wiringPi is used to use the GPIO pins of raspi
 #include <wiringPi.h>
