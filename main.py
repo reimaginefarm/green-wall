@@ -1,24 +1,82 @@
 ##############################################
 # Team NYUAD, Green / Vaponic Wall Code v0.1 #
 # Python version 2.7.13                      #
-# gpiozero library is needed                 #
 # 2018                                       #
 ##############################################
 
-from gpiozero import * # The library used to enable and use GPIO pins on the Raspi Zero
+
 from time import sleep
 from signal import pause
+import subprocess
 
 import raspiConfig
 
 
+TLC5974Pins = [0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0]
+
 def main():
 
-    #runFoggers()
+    # Compiling
+    #setupRunSwitches()
 
-    measureLightLevel()  
+    print("Started")
 
-    pause()
+    while True:
+        try:
+
+            TLC5974Pins[1] = 0
+
+
+            runSwitches(False)
+
+            sleep(2)
+
+            TLC5974Pins[1] = 4000
+
+
+            runSwitches(False)
+
+            sleep(2)
+
+
+
+
+            #pause()
+
+        except KeyboardInterrupt:
+            break
+
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+
+
+def runSwitches(blank):
+    bashCommand = "./runSwitches"
+    if(blank == True):
+        commandBlank = "true"
+    else:
+        commandBlank = "false"
+
+    for i in TLC5974Pins:
+        bashCommand = bashCommand + " " + str(i)
+
+    bashCommand = bashCommand + " " + commandBlank
+
+    #print(bashCommand)
+
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+def setupRunSwitches():
+    print("Compiling runSwitches.cpp\n")
+    bashCommand = "g++ -Wall -o runSwitches runSwitches.cpp -lwiringPi"
+
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    print("Compiled runSwitches.cpp\n")
 
 def measureLightLevel():
     lightLevel = InputDevice(20)
@@ -65,3 +123,12 @@ while False:
             DigitalOutputDevice(i).blink(on_time = raspiConfig.fogger[i]['onTime'])
 
     pause()
+
+    TLC5974Pins = {
+                    "0": 0, "1": 0, "2": 0, "3": 0,
+                    "4": 0, "5": 0, "6": 0, "7": 0,
+                    "8": 0, "9": 0, "10": 0, "11": 0,
+                    "12": 0, "13": 0, "14": 0, "15": 0,
+                    "16": 0, "17": 0, "18": 0, "19": 0,
+                    "20": 0, "21": 0, "22": 0, "23": 0
+    }

@@ -35,11 +35,10 @@ bool b; // used to store the results of the functions
 
 // GPIO pins used to connect the TLC5974 board
 // Check https://pinout.xyz/pinout/wiringpi for correct pin numbers
-uint8_t clk = 27; // clock / CLK
-uint8_t dat = 28; // data / DIN
-uint8_t lat = 29; // latch / LAT
-uint8_t blank = 37; // blank / /OE
-
+uint8_t lat = 15; // latch / LAT
+uint8_t blank = 16; // blank / /OE
+uint8_t clk = 5; // clock / CLK
+uint8_t dat = 6; // data / DIN
 
 
 // chan: Channel of the TLC5974 board (from 0 to 23)
@@ -59,9 +58,17 @@ int main(int argc, char* argv[]) {
     // getting GPIO pins ready to use
     setup();
 
-    // using arguments retrieved from command line to run functions
-    setPWM(atoi(argv[1]), atoi(argv[2]));
-    write(argv[3]);
+    // using arguments retrieved from command line to assign pins to their pwm values
+    
+    for (int i = 0; i < 24; i++) {
+      setPWM(i, atoi(argv[i+1]));
+    }
+
+
+    //setPWM(atoi(argv[1]), atoi(argv[2]));
+
+    // get the true or false argument and write data to TLC5974
+    write(false);
 
     return 0;
 }
