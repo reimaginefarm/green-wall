@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     setup();
 
     // using arguments retrieved from command line to assign pins to their pwm values
-    
+
     for (int i = 0; i < 24; i++) {
       setPWM(i, atoi(argv[i+1]));
     }
@@ -68,6 +68,8 @@ int main(int argc, char* argv[]) {
     //setPWM(atoi(argv[1]), atoi(argv[2]));
 
     // get the true or false argument and write data to TLC5974
+    //write(argv[sizeof(argv[])]);
+
     write(false);
 
     return 0;

@@ -27,19 +27,13 @@ def main():
     while True:
         try:
 
-            TLC5974Pins[1] = 0
+            while True:
+                setPin(12, 100, False, True)
+                sleep(0.75)
+                setPin(12, 0, False, True)
+                sleep(0.1)
 
 
-            runSwitches(False)
-
-            sleep(2)
-
-            TLC5974Pins[1] = 4000
-
-
-            runSwitches(False)
-
-            sleep(2)
 
 
 
@@ -52,6 +46,13 @@ def main():
         except:
             print("Unexpected error:", sys.exc_info()[0])
 
+
+def setPin(chan, percent, blank, write):
+    pwm = (4095*percent)/100
+    pwm = int(round(pwm))
+    TLC5974Pins[chan] = pwm
+    if write == True:
+        runSwitches(blank)
 
 def runSwitches(blank):
     bashCommand = "./runSwitches"
@@ -70,6 +71,13 @@ def runSwitches(blank):
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
+def resetSwitches(blank):
+    for i in range(len(TLC5974Pins)):
+        TLC5974Pins[i] = 0
+        #print(TLC5974Pins[i])
+        runSwitches(blank)
+
+
 def setupRunSwitches():
     print("Compiling runSwitches.cpp\n")
     bashCommand = "g++ -Wall -o runSwitches runSwitches.cpp -lwiringPi"
@@ -77,6 +85,7 @@ def setupRunSwitches():
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     print("Compiled runSwitches.cpp\n")
+
 
 def measureLightLevel():
     lightLevel = InputDevice(20)
