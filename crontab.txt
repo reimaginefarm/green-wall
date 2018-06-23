@@ -1,0 +1,1 @@
+@reboot su pi -c /home/pi/vaponic.wall/launcher.sh >/home/pi/logs/cronlog 2>&1
