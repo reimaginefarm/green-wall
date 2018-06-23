@@ -4,5 +4,5 @@
 
 cd /
 cd home/pi/vaponic.wall
-sudo python main.py
+python main.py
 cd /

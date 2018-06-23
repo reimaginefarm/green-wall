@@ -1,5 +1,5 @@
 ##############################################
-# Team NYUAD, Green / Vaponic Wall Code v0.1 #
+# Team NYUAD, Green / Vaponic Wall Code v0.2 #
 # Python version 2.7.13                      #
 # 2018                                       #
 ##############################################
