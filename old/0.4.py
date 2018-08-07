@@ -38,7 +38,7 @@ pwm.set_pwm_freq(60)
 
 def main():
 
-    print 'Let the games begin @',  whatsTheTime()
+    print 'Started @',  whatsTheTime()
     print("---The main---")
 
     # Set lights
@@ -48,13 +48,13 @@ def main():
     # For example: setPin(number of the channel, power percent, onDuration, offDuration)
     # durations are in seconds!!!
 
-    setPin(4, 100, 100, 6000)
-    setPin(5, 100, 100, 6000)
+    setPin(4, 100, 100, 3600)
+    setPin(5, 100, 100, 3600)
 
-    setPin(6, 100, 60, 2400)
-    setPin(7, 100, 60, 2400)
-    setPin(8, 100, 60, 2400)
-    setPin(9, 100, 60, 2400)
+    setPin(6, 100, 60, 1800)
+    setPin(7, 100, 60, 1800)
+    setPin(8, 100, 60, 1800)
+    setPin(9, 100, 60, 1800)
 
     #schedule.run_all()
 
