@@ -1,14 +1,5 @@
 <?php
 
-/*
-##############################################
-# Team NYUAD, Green / Vaponic Wall Code v1.0 #
-# Server side code                           #
-# PHP 7.0                                    #
-# 2018                                       #
-##############################################
-*/
-
 // Report errors as http response,
 // IT SHOULD BE ENABLED ONLY FOR DEBUGGING PURPOSES
 $enableDebugging = false;
@@ -30,38 +21,32 @@ $response = [
     "serverCurrentUnixTime" => time(),
     "onDuration" => 0,  // in seconds
     "offDuration" => 0  // in seconds
+
 ];
 
 // Parse the variables that are transferred over http
-urlParser($enableDebugging);
+urlParser();
+
+updadeLastCommunicatedTimeOnDb('/var/www/html/greenwall.db', $deviceType, $deviceId, $deviceIp);
 
 // If there are no errors related to getting the type and id of the device,
 // keep going. If there is an error, send "-1" as an error indication
 if (!$error) {
-    updadeLastCommunicatedTimeOnDb('/var/www/html/greenwall.db', $deviceType, $deviceId, $deviceIp);
-
     $row = getDataFromDb('/var/www/html/greenwall.db', $deviceType, $deviceId);
 
     if ($row['deviceType'] == "fogger") {
-
         $response = transferDbInformationToResponse($row, $response);
+        //$response['deviceIsEnabled'] = 0;
         $response['runOnlyOnce'] = 0;
-
         printArrayAsJson($response);
-
     } elseif ($row['deviceType'] == "light") {
-
         $response = transferDbInformationToResponse($row, $response);
+        $response['deviceIsEnabled'] = 0;
         $response['runOnlyOnce'] = 0;
-
         printArrayAsJson($response);
-
     } elseif (($row['deviceType'] == "refillPump") || ($row['deviceType'] == "nutrientPump") || ($row['deviceType'] == "drainPump")) {
-
         $response = transferDbInformationToResponse($row, $response);
-
         printArrayAsJson($response);
-
     }
 } else {
     echo 'ERROR';
@@ -70,13 +55,13 @@ if (!$error) {
 ///////////////////////////////////////////////////////////////////
 //////////////////////////// FUNCTIONS ////////////////////////////
 ///////////////////////////////////////////////////////////////////
-function urlParser($enableDebugging)
+function urlParser()
 {
     //print_r($_GET);
-    if (!empty($_POST['deviceType']) && !empty($_POST['deviceId'])) {
-        $GLOBALS['deviceType'] = $_POST['deviceType'];
-        $GLOBALS['deviceId'] = $_POST['deviceId'];
-        $GLOBALS['deviceIp'] = $_POST['deviceIp'];
+    if (!empty($_GET['deviceType']) && !empty($_GET['deviceId'])) {
+        $GLOBALS['deviceType'] = $_GET['deviceType'];
+        $GLOBALS['deviceId'] = $_GET['deviceId'];
+        $GLOBALS['deviceIp'] = $_GET['deviceIp'];
 
         $GLOBALS['error'] = false;
     } else {

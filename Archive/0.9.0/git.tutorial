@@ -1,0 +1,4 @@
+git add * to add files (may need to use git rm <filename> if prompted) # to stage changes and resolve conflicts
+git commit -m "my commit comment" # to commit changes to HEAD
+git push origin dev # to push code to online repo
+git status # to check what's up
