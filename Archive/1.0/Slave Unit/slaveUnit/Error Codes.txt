@@ -1,0 +1,26 @@
+ ##############################################
+ # Team NYUAD, Green / Vaponic Wall Code v1.0 #
+ # Slave module error codes and meanings      #
+ # 2018                                       #
+ ##############################################
+
+                                              //^\\
+                                          //^\\ #
+    q_/\/\   q_/\/\    q_/\/\   q_/\/\      #   #
+ ||||`    /|/|`     <\<\`    |\|\`     #   #
+ #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
+
+
+CODE - MEANING
+
+// Server connection related
+101 - Server connection is lost
+102 - Restored server connection
+
+
+// Database related
+201 - The database entry is out of boundaries
+
+
+// Misc.
+42 - The answer to everything

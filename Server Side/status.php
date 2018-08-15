@@ -26,7 +26,7 @@ if ($enableDebugging) {
 
 date_default_timezone_set('Asia/Dubai');
 
-function createRows()
+function createRowsForDevices()
 {
     $db = new SQLite3('/var/www/html/greenwall.db', SQLITE3_OPEN_READONLY);
 
@@ -36,33 +36,207 @@ function createRows()
 
     while ($row = $results->fetchArray()) {
         echo "<tr>";
-        echo "<td>"; echo $row["dbId"]; echo "</td>";
-        echo "<td>"; echo $row["deviceType"]; echo "</td>";
-        echo "<td>"; echo $row["deviceId"]; echo "</td>";
-        echo "<td>"; echo $row["powerPercent"]; echo "</td>";
-        echo "<td>"; echo $row["dataUpdateInterval"]; echo "</td>";
-        echo "<td>"; echo $row["deviceIpAddress"]; echo "</td>";
-        echo "<td>"; echo $row["enableDeepSleep"]; echo "</td>";
-        echo "<td>"; echo $row["enableWifiOffWhenNotUsed"]; echo "</td>";
+        echo "<td>";
+        echo $row["dbId"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["deviceType"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["deviceId"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["powerPercent"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["dataUpdateInterval"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["deviceIpAddress"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["enableDeepSleep"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["enableWifiOffWhenNotUsed"];
+        echo "</td>";
 
-        if ((time() - $row["lastCommunicatedOn"]) <= 1*($row["dataUpdateInterval"])){
-          echo "<td bgcolor='#00FF00'>"; echo $row["lastCommunicatedOn"];
-          echo "&nbsp; &nbsp; &nbsp;    :)   ";
-        } else if ((time() - $row["lastCommunicatedOn"]) >= 2*($row["dataUpdateInterval"])){
-          echo "<td bgcolor='#FF0000'>"; echo $row["lastCommunicatedOn"];
-          echo "&nbsp; &nbsp; &nbsp;    :(   ";
-        } else if ((time() - $row["lastCommunicatedOn"]) >= 1*($row["dataUpdateInterval"])){
-          echo "<td bgcolor='#FFA500'>"; echo $row["lastCommunicatedOn"];
-          echo "&nbsp; &nbsp; &nbsp;    :|   ";
+        if ((time() - $row["lastCommunicatedOn"]) <= 1*($row["dataUpdateInterval"])) {
+            echo "<td bgcolor='#00FF00'>";
+            echo $row["lastCommunicatedOn"];
+            echo " (";
+            echo(time() - $row["lastCommunicatedOn"]);
+            echo ")";
+            echo "<br>    :)   ";
+        } elseif ((time() - $row["lastCommunicatedOn"]) >= 2*($row["dataUpdateInterval"])) {
+            echo "<td bgcolor='#FF0000'>";
+            echo $row["lastCommunicatedOn"];
+            echo " (";
+            echo(time() - $row["lastCommunicatedOn"]);
+            echo ")";
+            echo "<br>    :(   ";
+        } elseif ((time() - $row["lastCommunicatedOn"]) >= 1*($row["dataUpdateInterval"])) {
+            echo "<td bgcolor='#FFA500'>";
+            echo $row["lastCommunicatedOn"];
+            echo " (";
+            echo(time() - $row["lastCommunicatedOn"]);
+            echo ")";
+            echo "<br>    :|   ";
         }
         echo "</td>";
-        echo "<td>"; echo $row["onDuration"]; echo "</td>";
-        echo "<td>"; echo $row["offDuration"]; echo "</td>";
-        echo "<td>"; echo $row["onTime"]; echo "</td>";
-        echo "<td>"; echo $row["offTime"]; echo "</td>";
-        echo "<td>"; echo $row["extraDimAfterTime"]; echo "</td>";
+        echo "<td>";
+        echo $row["onDuration"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["offDuration"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["onTime"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["offTime"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["extraDimAfterTime"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["pumpMode"];
+        echo "</td>";
         echo "</tr>";
     }
+
+    // Free the memory, this in NOT done automatically, while your script is running
+    $results->finalize();
+
+    // Close database connect
+    $db->close();
+}
+
+
+function createRowsForColumns()
+{
+    $db = new SQLite3('/var/www/html/greenwall.db', SQLITE3_OPEN_READONLY);
+
+    $query = 'SELECT * FROM columns';
+
+    $results = $db->query($query);
+    $columnCount = 0;
+
+
+    while ($column = $results->fetchArray()) {
+        echo "<td style='border-collapse: collapse; border: none;'>";
+        echo "<table>";
+        echo "<tr>";
+        echo "<th>";
+        echo "<i>Column: ";
+        echo $column["columnId"];
+        echo " (";
+        echo $column["plantType"];
+        echo ") </i>";
+        echo "</th>";
+        echo "</tr>";
+        $query2 = 'SELECT * FROM boxes WHERE locatedOnNthColumn = "'.$column["columnId"].'" ORDER BY locatedOnNthRowFromBottom DESC';
+
+        $results2 = $db->query($query2);
+
+        while ($row = $results2->fetchArray()) {
+            echo "<tr>";
+            echo "<td>";
+
+            echo "<u>Box Type</u>: ";
+            echo $row["boxType"];
+
+            echo "<br>";
+
+            echo "<u>Box ID</u>: ";
+            echo $row["boxId"];
+
+            echo "<br>";
+            echo "<br>";
+
+            if ($row["boxType"] == "plant") {
+                echo "<u>Plant Capacity</u>: ";
+                echo $row["plantCapacity"];
+
+                echo "<br>";
+
+                echo "<u>Plant Type</u>:  ";
+                echo $row["plantType"];
+
+                echo "<br>";
+
+                echo "<u>Plants are placed on</u>:  ";
+                echo $row["plantsArePlacedOn"];
+
+                echo "<br>";
+                echo "<br>";
+                echo "<u>Fogger ID</u>: ";
+                echo $row["foggerId"];
+
+                echo "<br>";
+
+                echo "<u>Light ID</u>: ";
+                echo $row["lightId"];
+
+                echo "<br>";
+
+                echo "<u>Light Sensor ID</u>: ";
+                echo $row["lightSensorId"];
+
+                echo "<br>";
+            }
+
+            echo "<u>Pump ID</u>: ";
+            echo $row["pumpId"];
+
+            echo "<br>";
+
+            echo "<u>Water Level Sensor ID</u>: ";
+            echo $row["waterLevelSensorId"];
+
+            echo "<br>";
+            echo "<br>";
+            echo "<u>pH Min</u>: ";
+            echo $row["phMin"];
+
+            echo "<br>";
+
+            echo "<u>pH Max</u>: ";
+            echo $row["phMax"];
+
+            echo "<br>";
+
+            echo "<u>Current pH</u>: ";
+            echo $row["phLevel"];
+
+            echo "<br>";
+
+            echo "<u>EC Min</u>: ";
+            echo $row["ecMin"];
+
+            echo "<br>";
+
+            echo "<u>EC Max</u>: ";
+            echo $row["ecMax"];
+
+            echo "<br>";
+
+            echo "<u>Current EC</u>: ";
+            echo $row["ecLevel"];
+
+            echo "<br>";
+
+            echo "<u>Last pH and EC measurment time</u>: ";
+            echo $row["phEcLastMeasuredOn"];
+
+            echo "</td>";
+            echo "</tr>";
+        }
+
+        echo "</table>";
+        echo "</td>";
+    }
+
 
     // Free the memory, this in NOT done automatically, while your script is running
     $results->finalize();
@@ -110,12 +284,27 @@ function isNowInTimePeriod($startTimeString, $endTimeString)
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="refresh" content="3" >
+<meta http-equiv="refresh" content="5" >
 <style>
-table, h2, h4 {
+h3 {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 95%;
+}
+
+h2, h4 {
+    font-family: arial, sans-serif;
+    font-size: 11pt;
+    border-collapse: collapse;
+    width: 95%;
+}
+
+table {
+    font-family: arial, sans-serif;
+    font-size: 11pt;
+    border-collapse: collapse;
+    width: 95%;
+    vertical-align: top;
 }
 
 td, th {
@@ -132,15 +321,20 @@ tr:nth-child(even) {
 <body>
 
 <div align="center" width="100%">
-<h2 align="left">Devices Table</h2>
-
 <h4 align="left"><i>
 
-  Page refreshes every 3 second   |   Current Unix time: <?PHP echo time(); ?>   |   Server IP Address: <?PHP echo $_SERVER['REMOTE_ADDR']; ?>   |   Server Hostname: <?PHP echo gethostname();?>
+  Page refreshes every 5 second
+  |   Current Unix time: <?php echo time(); ?>
+  |   Server Time: <?php echo date('m/d/Y H:i:s', time()); ?>
+
   <br>
+
+  Server IP Address: <?php echo $_SERVER['REMOTE_ADDR']; ?>
+  |   Server Hostname: <?php echo gethostname();?>
 
 </i></h4>
 
+<h3 align="left">Devices Table</h3>
 <table id="myTable">
   <tr>
     <th onclick="sortTable(0)">DB ID</th>
@@ -157,11 +351,29 @@ tr:nth-child(even) {
     <th onclick="sortTable(11)">On Time </th>
     <th onclick="sortTable(12)">Off Time </th>
     <th onclick="sortTable(13)">Extra Dim After</th>
+    <th onclick="sortTable(14)">Pump Mode</th>
   </tr>
 
-  <?PHP createRows(); ?>
+  <?php createRowsForDevices(); ?>
 
 </table>
+
+<br>
+<h3 align="left">Columns</h3>
+<h4 align="left"><i>
+
+  Boxes are order from top to bottom by the actual order
+
+</i></h4>
+
+<table>
+
+<tr style="vertical-align: top;">
+  <?php createRowsForColumns(); ?>
+</tr>
+
+</table>
+
 
 </div>
 

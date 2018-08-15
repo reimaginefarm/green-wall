@@ -6,8 +6,8 @@
  # 2018                                       #
  ##############################################
 
-                                            //^\\
-                                        //^\\  #
+                                              //^\\
+                                          //^\\ #
     q_/\/\   q_/\/\    q_/\/\   q_/\/\      #   #
  ||||`    /|/|`     <\<\`    |\|\`     #   #
  #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
@@ -26,13 +26,13 @@
 #define PWMRANGE 1023
 
 bool enableDebugging = true;
-bool enableSerialBanner = true;
+bool enableSerialBanner = false;
 
 ////////////////////////////////////////////////////////
 // slave unit vars begin:
 // Device type option: fogger, light, nutrientPump, refillPump, drainPump
-const String deviceType = "fogger";
-const String deviceId = "1";
+const String deviceType = "light";
+const String deviceId = "2";
 
 const int transistorPin = 14;
 int transistorPinPwmValue = 0;
@@ -186,12 +186,7 @@ void setup() {
         ///////////////////////////////////////////////////////
 
         Serial.println(" ");
-        Serial.print("Millis(): ");
-        Serial.println(millis());
-        Serial.println("//////////////////////////////////");
-        Serial.println("//        SETUP COMPLETED       //");
-        Serial.println("//      RUNNING THE SYSTEM      //");
-        Serial.println("//////////////////////////////////");
+        Serial.println("Running the system...");
         Serial.println(" ");
 
         delay(1000);
@@ -284,14 +279,12 @@ void slaveSetup() {
 
         // A line break for more readibility
         Serial.println(" ");
-        Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
         Serial.println("Connecting to server to get slave configuration");
         Serial.println("Please make sure that the following variables are correct for this slave device");
         Serial.print("Device Type: ");
         Serial.println(deviceType);
         Serial.print("Device ID: ");
         Serial.println(deviceId);
-        Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
 
         httpRequestCallback();
 
@@ -307,7 +300,6 @@ void slaveSetup() {
                 // A line break for more readibility
                 Serial.println(" ");
 
-                Serial.println("//////////////////////////////////");
                 Serial.print("Updated variables:");
                 Serial.println(" ");
 
@@ -339,7 +331,6 @@ void slaveSetup() {
                 Serial.print("serverCurrentUnixTime:");
                 Serial.println(serverCurrentUnixTime);
 
-                Serial.println("//////////////////////////////////");
                 // A line break for more readibility
                 Serial.println(" ");
 
@@ -347,9 +338,7 @@ void slaveSetup() {
                 // A line break for more readibility
                 Serial.println(" ");
 
-                Serial.println("///////////////////////////////////////////////////////////////////");
-                Serial.println("// Couldn't update variables due to the server connection error  //");
-                Serial.println("///////////////////////////////////////////////////////////////////");
+                Serial.println("Couldn't update variables due to the server connection error");
 
                 // A line break for more readibility
                 Serial.println(" ");
@@ -362,11 +351,8 @@ void setupTaskManagerAddTasks() {
 
         Serial.println(" ");
 
-        Serial.println("////////////////////////////////////////////////////////////////////");
         taskManager.init();
-        Serial.println("*Initialized Scheduler (Task Manager)*");
-
-        Serial.println(" ");
+        Serial.println("Initialized scheduler");
 
         taskManager.addTask(tHttpRequest);
         tHttpRequest.setInterval(dataUpdateInterval);
@@ -390,14 +376,14 @@ void setupTaskManagerAddTasks() {
         taskManager.addTask(tRunLight);
         tRunLight.setInterval(dataUpdateInterval);
         Serial.println("Added 'Run light' task");
-        Serial.println("////////////////////////////////////////////////////////////////////");
+
+        Serial.println(" ");
 
 }
 
 void setupTaskManagerEnableTasks() {
 
         Serial.println(" ");
-        Serial.println("////////////////////////////////////////////////////////////////////");
 
         tHttpRequest.enable();
         Serial.println("Enabled 'HTTP request' task");
@@ -421,8 +407,6 @@ void setupTaskManagerEnableTasks() {
                 tRunLight.enable();
                 Serial.println("Enabled 'Run light' task");
         }
-
-        Serial.println("////////////////////////////////////////////////////////////////////");
 
 }
 
@@ -673,9 +657,6 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
 
                         updateDataUpdateIntervals = true;
 
-                        // bad practice but needed to make it work more stable
-                        delay(500);
-
                 } else {
 
                         // In order to prevent any mistakes in the database to cause problems
@@ -751,6 +732,8 @@ void updateDataUpdateIntervalsCallback() {
         if(updateDataUpdateIntervals) {
                 updateDataUpdateIntervals = false;
 
+                Serial.println("burdayim");
+
                 tHttpRequest.disable();
                 tHttpRequestParser.disable();
                 tParsedDataToRegularSlaveUnitVariables.disable();
@@ -776,16 +759,16 @@ void updateDataUpdateIntervalsCallback() {
                         tRunLight.enable();
                 }
 
-                // A line break for more readibility
-                Serial.println(" ");
-                Serial.print("Millis(): ");
-                Serial.println(millis());
-                Serial.println("//////////////////////////////////");
-                Serial.println("//            UPDATED           //");
-                Serial.println("//          DATA UPDATE         //");
-                Serial.println("//           VARIABLES          //");
-                Serial.println("//////////////////////////////////");
-                Serial.println(" ");
+                if(enableDebugging) {
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("Updated **DATA UPDATE INTERVALS** successfully");
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
         }
 
 }
