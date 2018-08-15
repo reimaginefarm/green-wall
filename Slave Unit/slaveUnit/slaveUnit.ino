@@ -1,11 +1,17 @@
 /*
-##############################################
-# Team NYUAD, Green / Vaponic Wall Code v1.0 #
-# Sleve module side code                     #
-# ESP8266 WIFI Module                        #
-# 2018                                       #
-##############################################
-*/
+ ##############################################
+ # Team NYUAD, Green / Vaponic Wall Code v1.0 #
+ # Slave module side code                     #
+ # ESP8266 WIFI Module                        #
+ # 2018                                       #
+ ##############################################
+
+                                              //^\\
+                                          //^\\ #
+    q_/\/\   q_/\/\    q_/\/\   q_/\/\      #   #
+ ||||`    /|/|`     <\<\`    |\|\`     #   #
+ #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
+ */
 
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -19,17 +25,19 @@
 
 #define PWMRANGE 1023
 
-bool enableDebugging = false;
+bool enableDebugging = true;
+bool enableSerialBanner = false;
 
 ////////////////////////////////////////////////////////
 // slave unit vars begin:
 // Device type option: fogger, light, nutrientPump, refillPump, drainPump
 const String deviceType = "light";
-const String deviceId = "1";
+const String deviceId = "2";
 
 const int transistorPin = 14;
-int transistorPinPwmValue = 1023;
-int previousTransistorPinPwmValue = 1023;
+int transistorPinPwmValue = 0;
+int previousTransistorPinPwmValue = 0;
+int tempDeviceIsEnabled = 1;
 
 int deviceState = LOW;
 unsigned long previousMillis = 0;
@@ -65,6 +73,7 @@ String payload = "-1";
 
 bool httpRequestError = true;
 bool updateDataUpdateIntervals = false;
+unsigned long previousServerDataUpdateInterval = dataUpdateInterval;
 bool lostServerConnection = false;
 
 // Default values
@@ -75,8 +84,8 @@ unsigned long serverDataUpdateInterval = 1;
 int serverEnableDeepSleep = 0;
 int serverEnableWifiOffWhenNotUsed = 0;
 long serverCurrentUnixTime;
-unsigned long onDuration = 5;
-unsigned long offDuration = 5;
+unsigned long onDuration = 15;
+unsigned long offDuration = 60;
 // http request vars end;
 ////////////////////////////////////////////////////////
 
@@ -100,10 +109,7 @@ Task tHttpRequestParser(dataUpdateInterval, TASK_FOREVER, &httpRequestParserCall
 
 Task tParsedDataToRegularSlaveUnitVariables(dataUpdateInterval, TASK_FOREVER, &parsedDataToRegularSlaveUnitVariablesCallback);
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// bu task duzgun calismiyor, daha sonra ilgilenilecek
-//Task tUpdateDataUpdateIntervals(dataUpdateInterval, TASK_FOREVER, &updateDataUpdateIntervalsCallback);
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Task tUpdateDataUpdateIntervals(dataUpdateInterval, TASK_FOREVER, &updateDataUpdateIntervalsCallback);
 
 // Fogger runs every seconds, so that it can run the run it on the seconds level (aka. resolution)
 Task tRunFogger(1000, TASK_FOREVER, &runFoggerCallback);
@@ -133,23 +139,17 @@ void setup() {
         //////////////// WIFI - OTA SETUP BEGIN ////////////////
         ////////////////////////////////////////////////////////
         Serial.begin(115200);
+
+        if(enableSerialBanner == true) {
+                camelArtAndBanner();
+        }
+
         Serial.println("Booting");
 
         setupWifi(); // wifi cnk procedure;
         arduinoOTASetup();
         ///////////////////////////////////////////////////////
         ////////////// WIFI - OTA SETUP COMPLETE //////////////
-        ///////////////////////////////////////////////////////
-
-
-        ///////////////////////////////////////////////////////
-        ////////// TASK MANAGER SETUP PART 1 - BEGIN //////////
-        ///////////////////////////////////////////////////////
-
-        setupTaskManagerAddTasks();
-
-        ///////////////////////////////////////////////////////
-        /////// TASK MANAGER SETUP PART 1 - COMPLETE //////////
         ///////////////////////////////////////////////////////
 
 
@@ -165,6 +165,17 @@ void setup() {
 
 
         ///////////////////////////////////////////////////////
+        ////////// TASK MANAGER SETUP PART 1 - BEGIN //////////
+        ///////////////////////////////////////////////////////
+
+        setupTaskManagerAddTasks();
+
+        ///////////////////////////////////////////////////////
+        /////// TASK MANAGER SETUP PART 1 - COMPLETE //////////
+        ///////////////////////////////////////////////////////
+
+
+        ///////////////////////////////////////////////////////
         ///////// TASK MANAGER SETUP PART 2 - BEGIN ///////////
         ///////////////////////////////////////////////////////
 
@@ -174,6 +185,7 @@ void setup() {
         /////// TASK MANAGER SETUP PART 2 - COMPLETE //////////
         ///////////////////////////////////////////////////////
 
+        Serial.println(" ");
         Serial.println("Running the system...");
         Serial.println(" ");
 
@@ -233,11 +245,18 @@ void arduinoOTASetup() {
 
         ArduinoOTA.onStart([]() {
                 Serial.println("Start");
+
+                // Disable tasks during the update
+                taskManager.disableAll();
         });
         ArduinoOTA.onEnd([]() {
                 Serial.println("\nEnd");
         });
         ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+
+                // Disable tasks during the update
+                taskManager.disableAll();
+
                 Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
         });
         ArduinoOTA.onError([](ota_error_t error) {
@@ -247,6 +266,9 @@ void arduinoOTASetup() {
                 else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
                 else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
                 else if (error == OTA_END_ERROR) Serial.println("End Failed");
+
+                // Enable tasks if there is an error, so that system can keep running
+                taskManager.enableAll();
         });
         ArduinoOTA.begin();
         // ota setup end;
@@ -267,6 +289,9 @@ void slaveSetup() {
         httpRequestCallback();
 
         httpRequestParserCallback();
+
+        // Need to keep the device out of the inifite reboot loop
+        updateDataUpdateIntervals = false;
 
         parsedDataToRegularSlaveUnitVariablesCallback();
 
@@ -341,9 +366,9 @@ void setupTaskManagerAddTasks() {
         tParsedDataToRegularSlaveUnitVariables.setInterval(dataUpdateInterval);
         Serial.println("Added 'Parsed data to regular slave unit variables' task");
 
-        //taskManager.addTask(tUpdateDataUpdateIntervals);
-        //tUpdateDataUpdateIntervals.setInterval(dataUpdateInterval);
-        //Serial.println("Added 'Update data update intervals' task");
+        taskManager.addTask(tUpdateDataUpdateIntervals);
+        tUpdateDataUpdateIntervals.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Update data update intervals' task");
 
         taskManager.addTask(tRunFogger);
         Serial.println("Added 'Run fogger' task");
@@ -369,8 +394,8 @@ void setupTaskManagerEnableTasks() {
         tParsedDataToRegularSlaveUnitVariables.enable();
         Serial.println("Enabled 'Parsed data to regular slave unit variables' task");
 
-        //tUpdateDataUpdateIntervals.enable();
-        //Serial.println("Enabled 'Update data update intervals' task");
+        tUpdateDataUpdateIntervals.enable();
+        Serial.println("Enabled 'Update data update intervals' task");
 
         if((deviceType == "fogger") or (deviceType == "FOGGER") or (deviceType == "Fogger")) {
 
@@ -382,6 +407,30 @@ void setupTaskManagerEnableTasks() {
                 tRunLight.enable();
                 Serial.println("Enabled 'Run light' task");
         }
+
+}
+
+void camelArtAndBanner() {
+
+        Serial.println(" ");
+
+        Serial.println("##############################################");
+        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.0 #");
+        Serial.println("# Sleve module side code                     #");
+        Serial.println("# ESP8266 WIFI Module                        #");
+        Serial.println("# 2018                                       #");
+        Serial.println("##############################################");
+
+        Serial.println(" ");
+
+        // This looks reqular on serial monitor
+        Serial.println("                                              //^\\      ");
+        Serial.println("                                          //^\\ #        ");
+        Serial.println("     q_/\/\     q_/\/\       q_/\/\  q_/\/\        #   # ");
+        Serial.println("       ||||`    /|/|`     <\<\`    |\|\`       #   #     ");
+        Serial.println("   #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**# ");
+
+        Serial.println(" ");
 
 }
 
@@ -510,8 +559,25 @@ void httpRequestParserCallback() {
                 serverEnableDeepSleep = root["enableDeepSleep"]; // 0
                 serverEnableWifiOffWhenNotUsed = root["enableWifiOffWhenNotUsed"]; // 0
                 serverCurrentUnixTime = root["serverCurrentUnixTime"];                 // 1533838233
-                onDuration = root["onDuration"]; // -1
-                offDuration = root["offDuration"]; // -1
+
+                // Check if they are -1, they should be -1 if the device is a light
+                if ((root["onDuration"] > 0 ) and (root["offDuration"] > 0 )) {
+
+                        onDuration = root["onDuration"];
+
+                        // convert seconds to milliseconds for millis()
+                        offDuration = root["offDuration"];
+
+                } else {
+
+                        // If there is a problem, revert back to default values
+
+                        onDuration = 15;
+
+                        offDuration = 60;
+
+                }
+
 
                 // For debugging
                 if(enableDebugging) {
@@ -585,7 +651,7 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
                 transistorPinPwmValue = map(powerPercent, 0, 100, 0, 1023);
 
                 // if the new value is same, don't update the value
-                if(not (dataUpdateInterval == serverDataUpdateInterval*1000)) {
+                if((not (dataUpdateInterval == serverDataUpdateInterval*1000)) and (serverDataUpdateInterval > 0 )) {
                         // convert seconds to milliseconds for millis()
                         dataUpdateInterval = serverDataUpdateInterval*1000;
 
@@ -593,17 +659,32 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
 
                 } else {
 
+                        // In order to prevent any mistakes in the database to cause problems
+                        // on the slave unit
+                        if(serverDataUpdateInterval == 0 ) {
+
+                                // A line break for more readibility
+                                Serial.println(" ");
+                                Serial.print("Millis(): ");
+                                Serial.println(millis());
+                                Serial.println("//////////////////////////////////");
+                                Serial.println("// PLEASE CHECK THE DATA UPDATE //");
+                                Serial.println("//    INTERVAL VALUE FOR THIS   //");
+                                Serial.println("//      SPECIFIC SLAVE UNIT     //");
+                                Serial.println("//////////////////////////////////");
+                                Serial.println(" ");
+                        }
+
                         updateDataUpdateIntervals = false;
 
                 }
 
                 // convert seconds to milliseconds for millis()
-                // +1 for timing adjustment
-                onDuration = (onDuration+1)*1000;
+                onDuration = (onDuration)*1000;
 
                 // convert seconds to milliseconds for millis()
-                // +1 for timing adjustment
-                offDuration = (offDuration+1)*1000;
+                offDuration = (offDuration)*1000;
+
 
                 // Convert to boolean variable
                 if(serverEnableDeepSleep == 1) {
@@ -649,32 +730,45 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
 void updateDataUpdateIntervalsCallback() {
 
         if(updateDataUpdateIntervals) {
-
                 updateDataUpdateIntervals = false;
+
+                Serial.println("burdayim");
 
                 tHttpRequest.disable();
                 tHttpRequestParser.disable();
                 tParsedDataToRegularSlaveUnitVariables.disable();
+                tUpdateDataUpdateIntervals.disable();
+
 
                 tHttpRequest.setInterval(dataUpdateInterval);
                 tHttpRequestParser.setInterval(dataUpdateInterval);
                 tParsedDataToRegularSlaveUnitVariables.setInterval(dataUpdateInterval);
+                tUpdateDataUpdateIntervals.setInterval(dataUpdateInterval);
+
+                delay(500);
 
                 tHttpRequest.enable();
                 tHttpRequestParser.enable();
                 tParsedDataToRegularSlaveUnitVariables.enable();
+                tUpdateDataUpdateIntervals.enable();
+
+
+                if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
+                        tRunLight.disable();
+                        tRunLight.setInterval(dataUpdateInterval);
+                        tRunLight.enable();
+                }
 
                 if(enableDebugging) {
 
                         // A line break for more readibility
                         Serial.println(" ");
 
-                        Serial.println("Updated DATA UPDATE INTERVALS successfully");
+                        Serial.println("Updated **DATA UPDATE INTERVALS** successfully");
 
                         // A line break for more readibility
                         Serial.println(" ");
                 }
-
         }
 
 }
@@ -712,16 +806,24 @@ void runLightCallback() {
                 powerPercent = 1;
         }
 
+        tempDeviceIsEnabled  = deviceIsEnabled;
+
+        // In order to prevent direct shut down for lights
+        if (deviceIsEnabled == 0) {
+                deviceIsEnabled = 1;
+                transistorPinPwmValue = 1;
+        }
+
         // Slowly adjust the voltage
         if (previousTransistorPinPwmValue < transistorPinPwmValue) {
 
                 int tempPwmValue = transistorPinPwmValue;
 
-                for (int i = previousTransistorPinPwmValue; i <= tempPwmValue; i = i + 20) {
+                for (int i = previousTransistorPinPwmValue; i <= tempPwmValue; i = i + 10) {
 
                         transistorPinPwmValue = i;
 
-                        delay(50);
+                        delay(30);
 
                         updateTransistorPin();
                 }
@@ -730,11 +832,11 @@ void runLightCallback() {
 
                 int tempPwmValue = transistorPinPwmValue;
 
-                for (int i = previousTransistorPinPwmValue; i >= tempPwmValue; i = i - 20) {
+                for (int i = previousTransistorPinPwmValue; i >= tempPwmValue; i = i - 10) {
 
                         transistorPinPwmValue = i;
 
-                        delay(50);
+                        delay(30);
 
                         updateTransistorPin();
                 }
@@ -753,6 +855,8 @@ void runLightCallback() {
                 transistorPinPwmValue = 0;
                 powerPercent = 0;
         }
+
+        deviceIsEnabled = tempDeviceIsEnabled;
 
         previousTransistorPinPwmValue = transistorPinPwmValue;
 
@@ -799,6 +903,7 @@ void loop() {
 
         ArduinoOTA.handle();
 
+        // Run task manager tasks
         taskManager.execute();
 
 }

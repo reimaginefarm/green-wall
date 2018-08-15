@@ -7,6 +7,12 @@
 # PHP 7.0                                    #
 # 2018                                       #
 ##############################################
+
+                                              //^\\
+                                          //^\\ #
+    q_/\/\   q_/\/\    q_/\/\   q_/\/\      #   #
+      ||||`    /|/|`     <\<\`    |\|\`     #   #
+#*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
 */
 
 // Report errors as http response,
@@ -17,6 +23,8 @@ if ($enableDebugging) {
     ini_set('display_errors', 1);
     ini_set('html_errors', 'On');
 }
+
+date_default_timezone_set('Asia/Dubai');
 
 // The final response that will be returned
 // These are the default values
@@ -37,34 +45,47 @@ urlParser($enableDebugging);
 
 // If there are no errors related to getting the type and id of the device,
 // keep going. If there is an error, send "-1" as an error indication
+
 if (!$error) {
     updadeLastCommunicatedTimeOnDb('/var/www/html/greenwall.db', $deviceType, $deviceId, $deviceIp);
 
     $row = getDataFromDb('/var/www/html/greenwall.db', $deviceType, $deviceId);
 
+    $response = transferDbInformationToResponse($row, $response);
+    //////// FOGGER
     if ($row['deviceType'] == "fogger") {
-
-        $response = transferDbInformationToResponse($row, $response);
         $response['runOnlyOnce'] = 0;
 
         printArrayAsJson($response);
-
+    //////// LIGHT
     } elseif ($row['deviceType'] == "light") {
+        $response['runOnlyOnce'] = 0;
 
-        $response = transferDbInformationToResponse($row, $response);
+        // Device timing check
+        if (isNowInTimePeriod($row['onTime'], $row['offTime'])) {
+            $response['deviceIsEnabled'] = 1;
+
+            // Check if extra dim needs to be activated,
+            // 0600 is 6 AM in the morning. So it check between these two times
+            if (isNowInTimePeriod($row['extraDimAfterTime'], "0600")) {
+                $response['powerPercent'] = $response['powerPercent'] * 0.4;
+            }
+        } else {
+            $response['deviceIsEnabled'] = 0;
+        }
+
         $response['runOnlyOnce'] = 0;
 
         printArrayAsJson($response);
-
+    //////// PUMP
     } elseif (($row['deviceType'] == "refillPump") || ($row['deviceType'] == "nutrientPump") || ($row['deviceType'] == "drainPump")) {
 
-        $response = transferDbInformationToResponse($row, $response);
-
+      ///// NEEDS TO BE DEVELOPED
         printArrayAsJson($response);
-
     }
 } else {
     echo 'ERROR';
+    //echo "<br> The time is " . date("H:i");
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -88,7 +109,6 @@ function urlParser($enableDebugging)
         }
     }
 }
-
 
 function getDataFromDb($dbName, $deviceType, $deviceId)
 {
@@ -120,7 +140,6 @@ function getDataFromDb($dbName, $deviceType, $deviceId)
     return $row;
 }
 
-
 function updadeLastCommunicatedTimeOnDb($dbName, $deviceType, $deviceId, $deviceIp)
 {
     $db = new SQLite3($dbName, SQLITE3_OPEN_READWRITE);
@@ -141,7 +160,6 @@ function updadeLastCommunicatedTimeOnDb($dbName, $deviceType, $deviceId, $device
     $db->close();
 }
 
-
 function transferDbInformationToResponse($row, $response)
 {
     $response['deviceIsEnabled'] = 1;
@@ -157,7 +175,6 @@ function transferDbInformationToResponse($row, $response)
     return $response;
 }
 
-
 function arrayCleaner($array)
 {
 
@@ -171,6 +188,39 @@ function arrayCleaner($array)
     return $array;
 }
 
+function isNowInTimePeriod($startTimeString, $endTimeString)
+{
+    $startTimeString = strval($startTimeString);
+    $endTimeString = strval($endTimeString);
+
+    $startTimeStringArray = str_split($startTimeString, 2);
+    $startTimeString =  date("H:i", mktime($startTimeStringArray[0], $startTimeStringArray[1]));
+
+    $endTimeStringArray = str_split($endTimeString, 2);
+    $endTimeString =  date("H:i", mktime($endTimeStringArray[0], $endTimeStringArray[1]));
+
+    $currentTimeString = date('H:i');
+    //$currentTimeStringArray = str_split($currentTimeString, 2);
+    //$currentTimeString =  date("H:i", mktime($currentTimeStringArray[0], $currentTimeStringArray[1]));
+
+    $currentTime = DateTime::createFromFormat('H:i', $currentTimeString);
+    $startTime = DateTime::createFromFormat('H:i', $startTimeString);
+    $endTime = DateTime::createFromFormat('H:i', $endTimeString);
+
+    if ($startTime < $endTime) {
+        if (($currentTime >= $startTime) && ($currentTime <= $endTime)) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        if (($currentTime >= $startTime) || ($currentTime <= $endTime)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 
 function printArrayAsJson($array)
 {
