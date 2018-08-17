@@ -1,6 +1,6 @@
 /*
  ##############################################
- # Team NYUAD, Green / Vaponic Wall Code v1.0 #
+ # Team NYUAD, Green / Vaponic Wall Code v1.1 #
  # Slave module side code                     #
  # ESP8266 WIFI Module                        #
  # 2018                                       #
@@ -13,28 +13,59 @@
  #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
  */
 
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+// Default libraries
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+// For running functions at intervals
+// https://github.com/arkhipenko/TaskScheduler
 #include <TaskScheduler.h>
 
+// For parsing the data transferred from the server
+// https://github.com/bblanchon/ArduinoJson
 #include <ArduinoJson.h>
 
-#define PWMRANGE 1023
+// Default I2C library
+#include <Wire.h>
 
-bool enableDebugging = true;
-bool enableSerialBanner = true;
+// Adafruit unified sensors library
+#include <Adafruit_Sensor.h>
+
+// For the light sensor
+// https://github.com/adafruit/Adafruit_TSL2561
+#include <Adafruit_TSL2561_U.h>
+
+// For the pressure, altitute and temperature sensor
+// https://github.com/adafruit/Adafruit_BMP085_Unified
+#include <Adafruit_BMP085_U.h>
+
+// Defining the maximum avaliable pwm value for the pins of ESP8266
+#define PWMRANGE 1023
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+
+
+bool enableDebugging = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+bool enableSerialBanner = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+
 
 ////////////////////////////////////////////////////////
 // slave unit vars begin:
-// Device type option: fogger, light, nutrientPump, refillPump, drainPump
-const String deviceType = "fogger";
-const String deviceId = "1";
+// Device type option: fogger, light, pump, lightSensor, pressureSensor
+const String deviceType = "sik";   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+const String deviceId = "1"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 
 const int transistorPin = 14;
+
+// I2C Pins
+const int sdaPin = 5;   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bunları degistirmek simdilik bi ise yaramıyor
+const int sclPin = 4;
+
 int transistorPinPwmValue = 0;
 int previousTransistorPinPwmValue = 0;
 int tempDeviceIsEnabled = 1;
@@ -47,6 +78,10 @@ long interval = 1000;
 // Enable either deepsleep or wifi off or none
 bool enableDeepSleep = false;
 bool enableWifiOffWhenNotUsed = false;
+
+String isSensor = "0";
+String sensorReading = "0";
+bool sensorDataTransferRequest = false;
 
 // slave unit vars end;
 ////////////////////////////////////////////////////////
@@ -91,13 +126,14 @@ unsigned long offDuration = 60;
 
 
 ////////////////////////////////////////////////////////
-// Callback prototypes
+// Callback prototypes for the task manager
 void httpRequestCallback();
 void httpRequestParserCallback();
 void parsedDataToRegularSlaveUnitVariablesCallback();
 void updateDataUpdateIntervalsCallback();
 void runFoggerCallback();
 void runLightCallback();
+void runSensorCallback();
 ////////////////////////////////////////////////////////
 
 
@@ -115,6 +151,8 @@ Task tUpdateDataUpdateIntervals(dataUpdateInterval, TASK_FOREVER, &updateDataUpd
 Task tRunFogger(1000, TASK_FOREVER, &runFoggerCallback);
 
 Task tRunLight(dataUpdateInterval, TASK_FOREVER, &runLightCallback);
+
+Task tRunSensor((dataUpdateInterval+1000), TASK_FOREVER, &runSensorCallback);
 
 Scheduler taskManager;
 ////////////////////////////////////////////////////////
@@ -390,6 +428,10 @@ void setupTaskManagerAddTasks() {
         taskManager.addTask(tRunLight);
         tRunLight.setInterval(dataUpdateInterval);
         Serial.println("Added 'Run light' task");
+
+        taskManager.addTask(tRunSensor);
+        tRunSensor.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Run sensor' task");
         Serial.println("////////////////////////////////////////////////////////////////////");
 
 }
@@ -413,13 +455,27 @@ void setupTaskManagerEnableTasks() {
 
         if((deviceType == "fogger") or (deviceType == "FOGGER") or (deviceType == "Fogger")) {
 
+                isSensor = "0";
+
                 tRunFogger.enable();
-                Serial.println("Enabled 'Run fogger' task");
+                Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run fogger' task            //////////");
 
         } else if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
 
+                isSensor = "0";
+
                 tRunLight.enable();
-                Serial.println("Enabled 'Run light' task");
+                Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run light' task            //////////");
+
+        } else if((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
+
+                isSensor = "1";
+
+                tRunSensor.enable();
+                Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run sensor' task            //////////");
         }
 
         Serial.println("////////////////////////////////////////////////////////////////////");
@@ -463,7 +519,20 @@ void httpRequestCallback() {
 
                 http.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 
-                query = "deviceType=" + deviceType + "&deviceId=" + deviceId + "&deviceIp=" + WiFi.localIP().toString();
+                String deviceDataTransferRequest = " ";
+
+                // If the device is not a sensor, don't send a reading accidentally
+                if (sensorDataTransferRequest) {
+                        deviceDataTransferRequest = "1";
+                } else {
+                        deviceDataTransferRequest = "0";
+                        sensorReading = "0";
+                }
+
+                query = "deviceType=" + deviceType + "&deviceId=" + deviceId + "&deviceIp=" + WiFi.localIP().toString() + "&deviceDataTransferRequest=" + deviceDataTransferRequest + "&dataToTransfer=" + sensorReading;
+
+                // For debugging
+                //Serial.println(query);
 
                 // Send query to the server
                 http.POST(query);
@@ -516,8 +585,13 @@ void httpRequestCallback() {
 
                         httpRequestError = false;
 
-                        // Parse the payload
+
                         tHttpRequestParser.enable();
+                        tParsedDataToRegularSlaveUnitVariables.enable();
+
+
+                        // Reverting back to the original value
+                        sensorDataTransferRequest = false;
 
                         if(lostServerConnection == true) {
 
@@ -751,11 +825,20 @@ void updateDataUpdateIntervalsCallback() {
         if(updateDataUpdateIntervals) {
                 updateDataUpdateIntervals = false;
 
+                if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
+                        tRunLight.disable();
+                        tRunLight.setInterval(dataUpdateInterval);
+                        tRunLight.enable();
+                } else if ((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
+                        tRunSensor.disable();
+                        tRunSensor.setInterval(dataUpdateInterval);
+                        tRunSensor.enable();
+                }
+
                 tHttpRequest.disable();
                 tHttpRequestParser.disable();
                 tParsedDataToRegularSlaveUnitVariables.disable();
                 tUpdateDataUpdateIntervals.disable();
-
 
                 tHttpRequest.setInterval(dataUpdateInterval);
                 tHttpRequestParser.setInterval(dataUpdateInterval);
@@ -768,13 +851,6 @@ void updateDataUpdateIntervalsCallback() {
                 tHttpRequestParser.enable();
                 tParsedDataToRegularSlaveUnitVariables.enable();
                 tUpdateDataUpdateIntervals.enable();
-
-
-                if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
-                        tRunLight.disable();
-                        tRunLight.setInterval(dataUpdateInterval);
-                        tRunLight.enable();
-                }
 
                 // A line break for more readibility
                 Serial.println(" ");
@@ -877,6 +953,118 @@ void runLightCallback() {
 
         previousTransistorPinPwmValue = transistorPinPwmValue;
 
+}
+
+void runSensorCallback() {
+
+        if((deviceType.indexOf("light") >= 0) or (deviceType.indexOf("LIGHT") >= 0) or (deviceType.indexOf("Light") >= 0)) {
+
+                if(enableDebugging) {
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("Reading the sensor value...");
+
+                }
+
+                // sensorReading is a "String", <i> for you information </i>
+                sensorReading = lightSensorReading();
+
+                if(enableDebugging) {
+
+                        Serial.println("Now sending to the server.");
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
+
+                sensorDataTransferRequest = true;
+
+        } else if((deviceType.indexOf("pressure") >= 0) or (deviceType.indexOf("PRESSURE") >= 0) or (deviceType.indexOf("Pressure") >= 0)) {
+
+                if(enableDebugging) {
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("Reading the sensor value...");
+
+                }
+
+                // sensorReading is a "String", <i> for you information </i>
+                sensorReading = pressureSensorReading();
+
+                if(enableDebugging) {
+
+                        Serial.println("Now sending to the server.");
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
+
+                sensorDataTransferRequest = true;
+
+        } else {
+
+                sensorDataTransferRequest = false;
+
+                if(enableDebugging) {
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("I am not a sensor, how did I end up executing the sensor function?");
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
+
+        }
+
+}
+
+String lightSensorReading() {
+
+        Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
+
+        tsl.begin();
+
+        tsl.enableAutoRange(true);
+
+        tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);
+
+        sensors_event_t event;
+
+        tsl.getEvent(&event);
+
+        // Convert the reading to string, because it can handle every kind of data,
+        // even if the sensor is changed in the future
+        String reading = String(event.light);
+
+        return reading;
+}
+
+String pressureSensorReading() {
+
+        String reading = "";
+
+        Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
+
+        bmp.begin();
+
+        sensors_event_t event;
+        bmp.getEvent(&event);
+
+        float temperature;
+        bmp.getTemperature(&temperature);
+
+        float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
+
+        // Pressure + Temperature + Altitude
+        reading = String(event.pressure) + "_" + String(temperature) + "_" + bmp.pressureToAltitude(seaLevelPressure, event.pressure);
+
+        return reading;
 }
 
 void updateTransistorPin() {

@@ -2,7 +2,7 @@
 
 /*
 ##############################################
-# Team NYUAD, Green / Vaponic Wall Code v1.0 #
+# Team NYUAD, Green / Vaponic Wall Code v1.1 #
 # Server side code / Status Page             #
 # PHP 7.0                                    #
 # 2018                                       #
@@ -15,6 +15,10 @@
 #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
 */
 
+if (!isset($_GET['stop'])) {
+    header("Location: ?stop=0");
+}
+
 // Report errors as http response,
 // IT SHOULD BE ENABLED ONLY FOR DEBUGGING PURPOSES
 $enableDebugging = false;
@@ -22,6 +26,10 @@ if ($enableDebugging) {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
     ini_set('html_errors', 'On');
+} else {
+    error_reporting(0);
+    ini_set('display_errors',0);
+    ini_set('html_errors', 'Off');
 }
 
 date_default_timezone_set('Asia/Dubai');
@@ -102,6 +110,21 @@ function createRowsForDevices()
         echo "<td>";
         echo $row["pumpMode"];
         echo "</td>";
+        echo "<td>";
+        echo $row["isSensor"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["isDigitalSensor"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["minValue"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["maxValue"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["unit"];
+        echo "</td>";
         echo "</tr>";
     }
 
@@ -112,6 +135,51 @@ function createRowsForDevices()
     $db->close();
 }
 
+function createRowsForSensors()
+{
+    $db = new SQLite3('/var/www/html/greenwall.db', SQLITE3_OPEN_READONLY);
+
+    $query = 'SELECT * FROM deviceLogs ORDER BY dbId DESC LIMIT 10';
+
+    $results = $db->query($query);
+
+    while ($row = $results->fetchArray()) {
+        echo "<tr>";
+        echo "<td>";
+        echo $row["dbId"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["deviceType"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["deviceId"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["dateTime"];
+        echo " (";
+
+        // "+"" is the time zone conversation for abu dhabi time
+        echo gmdate("H:i:s", $row["dateTime"] + 14400);
+        echo " )";
+        echo "</td>";
+        echo "<td>";
+        echo $row["reading1"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["reading2"];
+        echo "</td>";
+        echo "<td>";
+        echo $row["reading3"];
+        echo "</td>";
+        echo "</tr>";
+    }
+
+    // Free the memory, this in NOT done automatically, while your script is running
+    $results->finalize();
+
+    // Close database connect
+    $db->close();
+}
 
 function createRowsForColumns()
 {
@@ -284,7 +352,14 @@ function isNowInTimePeriod($startTimeString, $endTimeString)
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="refresh" content="5" >
+
+  <?php
+  if ($_GET['stop'] == 1) {
+  } else {
+      echo "<meta http-equiv='refresh' content='5' >";
+  }
+?>
+
 <style>
 h3 {
     font-family: arial, sans-serif;
@@ -294,14 +369,14 @@ h3 {
 
 h2, h4 {
     font-family: arial, sans-serif;
-    font-size: 11pt;
+    font-size: 10pt;
     border-collapse: collapse;
     width: 95%;
 }
 
 table {
     font-family: arial, sans-serif;
-    font-size: 11pt;
+    font-size: 10pt;
     border-collapse: collapse;
     width: 95%;
     vertical-align: top;
@@ -321,20 +396,48 @@ tr:nth-child(even) {
 <body>
 
 <div align="center" width="100%">
-<h4 align="left"><i>
+  <table>
+<tr>
 
-  Page refreshes every 5 second
-  |   Current Unix time: <?php echo time(); ?>
-  |   Server Time: <?php echo date('m/d/Y H:i:s', time()); ?>
+  <td style='border-collapse: collapse; border: none;'>
+    <h4 align="left"><i>
+      <?php
+      if ($_GET['stop'] == 1) {
+          echo "Click the button to refresh page every 5 second";
+      } else {
+          echo "Page refreshes every 5 second";
+      }
+    ?>
 
-  <br>
+      |   Current Unix time: <?php echo time(); ?>
+      |   Server Time: <?php echo date('m/d/Y H:i:s', time()); ?>
 
-  Server IP Address: <?php echo $_SERVER['REMOTE_ADDR']; ?>
-  |   Server Hostname: <?php echo gethostname();?>
+      <br>
 
-</i></h4>
+      Server IP Address: <?php echo $_SERVER['REMOTE_ADDR']; ?>
+      |   Server Hostname: <?php echo gethostname();?>
 
-<h3 align="left">Devices Table</h3>
+    </i></h4>
+  </td>
+
+  <td style='text-align:right; border-collapse: collapse; border: none;'>
+    <?php
+    if ($_GET['stop'] == 1) {
+        echo "<a href='?stop=0' ><button type='button' >REFRESH THE PAGE!</button></a>";
+    } else {
+        echo "<a href='?stop=1' ><button type='button' > DON'T REFRESH!</button></a>";
+    }
+?>
+
+  </td>
+
+</tr>
+
+  </table>
+
+
+
+<h3 align="left">Devices</h3>
 <table id="myTable">
   <tr>
     <th onclick="sortTable(0)">DB ID</th>
@@ -351,7 +454,12 @@ tr:nth-child(even) {
     <th onclick="sortTable(11)">On Time </th>
     <th onclick="sortTable(12)">Off Time </th>
     <th onclick="sortTable(13)">Extra Dim After</th>
-    <th onclick="sortTable(14)">Pump Mode</th>
+    <th onclick="sortTable(14)">Current Pump Mode</th>
+    <th onclick="sortTable(15)">is Sensor</th>
+    <th onclick="sortTable(16)">is Digital Sensor</th>
+    <th onclick="sortTable(17)">Min Value</th>
+    <th onclick="sortTable(18)">Max Value</th>
+    <th onclick="sortTable(19)">Unit</th>
   </tr>
 
   <?php createRowsForDevices(); ?>
@@ -359,10 +467,28 @@ tr:nth-child(even) {
 </table>
 
 <br>
+<h3 align="left">Last 10 Sensor Readings</h3>
+
+<table id="myTable">
+  <tr>
+    <th>DB ID</th>
+    <th>Device Type</th>
+    <th>Device ID</th>
+    <th>Time Stamp</th>
+    <th>Reading 1</th>
+    <th>Reading 2</th>
+    <th>Reading 3</th>
+  </tr>
+
+  <?php createRowsForSensors(); ?>
+
+</table>
+
+<br>
 <h3 align="left">Columns</h3>
 <h4 align="left"><i>
 
-  Boxes are order from top to bottom by the actual order
+  Boxes are ordered from top to bottom by the actual order
 
 </i></h4>
 

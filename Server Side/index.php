@@ -2,7 +2,7 @@
 
 /*
 ##############################################
-# Team NYUAD, Green / Vaponic Wall Code v1.0 #
+# Team NYUAD, Green / Vaponic Wall Code v1.1 #
 # Server side code                           #
 # PHP 7.0                                    #
 # 2018                                       #
@@ -49,6 +49,12 @@ urlParser($enableDebugging);
 if (!$error) {
     updadeLastCommunicatedTimeOnDb('/var/www/html/greenwall.db', $deviceType, $deviceId, $deviceIp);
 
+    // If device needs to transfer data to server, do it first
+    if ($deviceDataTransferRequest == 1) {
+        sendDataToDb('/var/www/html/greenwall.db', $deviceType, $deviceId, $dataToTransfer);
+    }
+
+    // Get the device information
     $row = getDataFromDb('/var/www/html/greenwall.db', $deviceType, $deviceId);
 
     $response = transferDbInformationToResponse($row, $response);
@@ -78,9 +84,15 @@ if (!$error) {
 
         printArrayAsJson($response);
     //////// PUMP
-    } elseif (($row['deviceType'] == "refillPump") || ($row['deviceType'] == "nutrientPump") || ($row['deviceType'] == "drainPump")) {
+    } elseif ($row['deviceType'] == "pump") {
 
-      ///// NEEDS TO BE DEVELOPED
+        ///// Sensor
+        printArrayAsJson($response);
+    } elseif ($row['deviceType'] == "lightSensor") {
+        ///// Sensor
+        printArrayAsJson($response);
+    } elseif ($row['deviceType'] == "pressureSensor") {
+        ///// Sensor
         printArrayAsJson($response);
     }
 } else {
@@ -99,6 +111,9 @@ function urlParser($enableDebugging)
         $GLOBALS['deviceId'] = $_POST['deviceId'];
         $GLOBALS['deviceIp'] = $_POST['deviceIp'];
 
+        $GLOBALS['deviceDataTransferRequest'] = $_POST['deviceDataTransferRequest'];
+        $GLOBALS['dataToTransfer'] = $_POST['dataToTransfer'];
+
         $GLOBALS['error'] = false;
     } else {
         $GLOBALS['error'] = true;
@@ -114,11 +129,7 @@ function getDataFromDb($dbName, $deviceType, $deviceId)
 {
     $db = new SQLite3($dbName, SQLITE3_OPEN_READWRITE);
 
-    if ($deviceType == 'sensor') {
-        $query = 'SELECT * FROM sensors WHERE sensorType = "'.$deviceType.'" AND sensorId = '.$deviceId;
-    } else {
-        $query = 'SELECT * FROM devices WHERE deviceType = "'.$deviceType.'" AND deviceId = '.$deviceId;
-    }
+    $query = 'SELECT * FROM devices WHERE deviceType = "'.$deviceType.'" AND deviceId = '.$deviceId;
 
     //echo $query;
 
@@ -144,13 +155,36 @@ function updadeLastCommunicatedTimeOnDb($dbName, $deviceType, $deviceId, $device
 {
     $db = new SQLite3($dbName, SQLITE3_OPEN_READWRITE);
 
-    if ($deviceType == 'sensor') {
-        $query = 'UPDATE sensors SET lastCommunicatedOn = '.time().', sensorIpAddress = "'.$deviceIp.'" WHERE sensorType = "'.$deviceType.'" AND sensorId = '.$deviceId;
-    } else {
-        $query = 'UPDATE devices SET lastCommunicatedOn = '.time().', deviceIpAddress = "'.$deviceIp.'" WHERE deviceType = "'.$deviceType.'" AND deviceId = '.$deviceId;
-    }
+    $query = 'UPDATE devices SET lastCommunicatedOn = '.time().', deviceIpAddress = "'.$deviceIp.'" WHERE deviceType = "'.$deviceType.'" AND deviceId = '.$deviceId;
 
     //echo $query;
+
+    $db->busyTimeout(5000);
+
+    $db->exec($query);
+
+    // Close database connect
+    $db->close();
+}
+
+function sendDataToDb($dbName, $deviceType, $deviceId, $deviceData)
+{
+
+    // If there are more than one reading that comes from the sensor, divide it
+    $splittedDeviceData = explode("_", $deviceData);
+
+    if (count($splittedDeviceData) == 1) {
+        $query = 'INSERT INTO deviceLogs (deviceType, deviceId, dateTime, reading1) VALUES ("'.$deviceType.'", "'.$deviceId.'", '.time().', "'.$splittedDeviceData[0].'")';
+    } elseif (count($splittedDeviceData) == 2) {
+        $query = 'INSERT INTO deviceLogs (deviceType, deviceId, dateTime, reading1, reading2) VALUES ("'.$deviceType.'", "'.$deviceId.'", '.time().', "'.$splittedDeviceData[0].'", "'.$splittedDeviceData[1].'")';
+    } elseif (count($splittedDeviceData) == 3) {
+        $query = 'INSERT INTO deviceLogs (deviceType, deviceId, dateTime, reading1, reading2, reading3) VALUES ("'.$deviceType.'", "'.$deviceId.'", '.time().', "'.$splittedDeviceData[0].'", "'.$splittedDeviceData[1].'", "'.$splittedDeviceData[2].'")';
+    }
+
+
+    //echo $query;
+
+    $db = new SQLite3($dbName, SQLITE3_OPEN_READWRITE);
 
     $db->busyTimeout(5000);
 
@@ -181,7 +215,7 @@ function arrayCleaner($array)
   // Variables that are -1 mean that don't exist for the specific connected device
     foreach ($array as &$value) {
         if (is_null($value)) {
-            $value = -1;
+            $value = 0;
         }
     }
 
