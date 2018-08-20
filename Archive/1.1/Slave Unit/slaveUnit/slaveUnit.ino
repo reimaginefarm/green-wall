@@ -1,14 +1,13 @@
 /*
- ################################################
- # Team NYUAD, Green / Vaponic Wall Code v1.1.1 #
- # Slave module side code                       #
- # ESP8266 WIFI Module                          #
- # 2018                                         #
- # Author: woswos                               #
- ################################################
+ ##############################################
+ # Team NYUAD, Green / Vaponic Wall Code v1.1 #
+ # Slave module side code                     #
+ # ESP8266 WIFI Module                        #
+ # 2018                                       #
+ ##############################################
 
-                                              //^\\
-                                          //^\\ #
+                                            //^\\
+                                        //^\\  #
     q_/\/\   q_/\/\    q_/\/\   q_/\/\      #   #
  ||||`    /|/|`     <\<\`    |\|\`     #   #
  #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
@@ -45,23 +44,6 @@
 // https://github.com/adafruit/Adafruit_BMP085_Unified
 #include <Adafruit_BMP085_U.h>
 
-// For the humidity and temperature sensor (temperature is inccuarate)
-// https://github.com/adafruit/DHT-sensor-library
-#include <DHT.h>
-#include <DHT_U.h>
-
-// For the I2C ADC converter
-// https://github.com/adafruit/Adafruit_ADS1X15
-#include <Adafruit_ADS1015.h>
-
-// For the one-wire interface
-// https://github.com/PaulStoffregen/OneWire
-#include <OneWire.h>
-
-// For the dallas temperature sensor
-// https://github.com/milesburton/Arduino-Temperature-Control-Library
-#include <DallasTemperature.h>
-
 // Defining the maximum avaliable pwm value for the pins of ESP8266
 #define PWMRANGE 1023
 /**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
@@ -74,24 +56,15 @@ bool enableSerialBanner = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 ////////////////////////////////////////////////////////
 // slave unit vars begin:
-// Device type option: fogger, light, pump, valve,
-//                     lightSensor, pressureSensor, flowSensor, humiditySensor,
-//                     phSensor, ecSensor
-const String deviceType = "ecSensor";   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+// Device type option: fogger, light, pump, lightSensor, pressureSensor
+const String deviceType = "sik";   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 const String deviceId = "1"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 
-// Transistor control pin
 const int transistorPin = 14;
 
 // I2C Pins
 const int sdaPin = 5;   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bunları degistirmek simdilik bi ise yaramıyor
 const int sclPin = 4;
-//const int i2cAddressChangePin = 12;
-
-// One wire interface pin (for sensors that communicate over only one data)
-// Data pin is the digital I/O pin, not the analog one
-int oneWireInterfacePin = 13;
-int oneWireInterfacePin2 = 12;
 
 int transistorPinPwmValue = 0;
 int previousTransistorPinPwmValue = 0;
@@ -160,7 +133,6 @@ void parsedDataToRegularSlaveUnitVariablesCallback();
 void updateDataUpdateIntervalsCallback();
 void runFoggerCallback();
 void runLightCallback();
-void runValveCallback();
 void runSensorCallback();
 ////////////////////////////////////////////////////////
 
@@ -180,8 +152,6 @@ Task tRunFogger(1000, TASK_FOREVER, &runFoggerCallback);
 
 Task tRunLight(dataUpdateInterval, TASK_FOREVER, &runLightCallback);
 
-Task tRunValve(dataUpdateInterval, TASK_FOREVER, &runValveCallback);
-
 Task tRunSensor((dataUpdateInterval+1000), TASK_FOREVER, &runSensorCallback);
 
 Scheduler taskManager;
@@ -191,9 +161,6 @@ Scheduler taskManager;
 ////////////////////////////////////////////////////////
 ////////////////////// FUNCTIONS ///////////////////////
 ////////////////////////////////////////////////////////
-
-// Setting up the system for the first use. This function executes the other
-//      setup functions in the required order.
 void setup() {
 
         ////////////////////////////////////////////////////////
@@ -269,8 +236,6 @@ void setup() {
 
 }
 
-// Sets  up the wifi network and ensures that the devices is connected to the
-//     network with the given SSID and password.
 void setupWifi() {
         // wifi network cnk begin:
         Serial.println();
@@ -299,9 +264,6 @@ void setupWifi() {
         // wifi network cnk end;
 }
 
-// Arduino Over-The-Air updates setup.
-// This is usefull for uplading new code to the chip without actually connecting
-//      the usb cable.
 void arduinoOTASetup() {
         // ota setup begin:
 
@@ -356,8 +318,6 @@ void arduinoOTASetup() {
 
 }
 
-// Gets the initial variables from the server and makes sure that the system is
-//      ready for the first run.
 void slaveSetup() {
 
         // A line break for more readibility
@@ -436,7 +396,6 @@ void slaveSetup() {
 
 }
 
-// Adds all of the tasks delared to the task manager.
 void setupTaskManagerAddTasks() {
 
         Serial.println(" ");
@@ -470,10 +429,6 @@ void setupTaskManagerAddTasks() {
         tRunLight.setInterval(dataUpdateInterval);
         Serial.println("Added 'Run light' task");
 
-        taskManager.addTask(tRunValve);
-        tRunValve.setInterval(dataUpdateInterval);
-        Serial.println("Added 'Run valve' task");
-
         taskManager.addTask(tRunSensor);
         tRunSensor.setInterval(dataUpdateInterval);
         Serial.println("Added 'Run sensor' task");
@@ -481,7 +436,6 @@ void setupTaskManagerAddTasks() {
 
 }
 
-// Only enables the required tasks on the task manager.
 void setupTaskManagerEnableTasks() {
 
         Serial.println(" ");
@@ -515,15 +469,7 @@ void setupTaskManagerEnableTasks() {
                 Serial.println("////////////////////////////////////////////////////////////////////");
                 Serial.println("//////////           Enabled 'Run light' task            //////////");
 
-        } else if ((deviceType == "valve") or (deviceType == "VALVE") or (deviceType == "Valve")) {
-
-                isSensor = "0";
-
-                tRunValve.enable();
-                Serial.println("////////////////////////////////////////////////////////////////////");
-                Serial.println("//////////           Enabled 'Run valve' task            //////////");
-
-        }else if((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
+        } else if((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
 
                 isSensor = "1";
 
@@ -536,20 +482,16 @@ void setupTaskManagerEnableTasks() {
 
 }
 
-// Prints the banner for the code and a camel art to the serial monitor.
-// This is here only for fun purposes and it doesn't serve any functionality
-//      in the first place. That being said, I like that ASCII camel art :)
 void camelArtAndBanner() {
 
         Serial.println(" ");
 
-        Serial.println("################################################");
-        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.1.1 #");
-        Serial.println("# Sleve module side code                       #");
-        Serial.println("# ESP8266 WIFI Module                          #");
-        Serial.println("# 2018                                         #");
-        Serial.println("# Author: woswos                               #");
-        Serial.println("################################################");
+        Serial.println("##############################################");
+        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.0 #");
+        Serial.println("# Sleve module side code                     #");
+        Serial.println("# ESP8266 WIFI Module                        #");
+        Serial.println("# 2018                                       #");
+        Serial.println("##############################################");
 
         Serial.println(" ");
 
@@ -564,11 +506,6 @@ void camelArtAndBanner() {
 
 }
 
-// Does the https requests for the code. Connects to the main server and gets
-//      the reply in terms of a JSON formatted string.
-// This function also tries to handle possible server connection errors to keep
-//      the system running with the old information even if there is a problem
-//      with the main server.
 void httpRequestCallback() {
 
         // wait for WiFi connection
@@ -609,7 +546,7 @@ void httpRequestCallback() {
                 http.end();
 
                 // Change the http request error flag if the result is unsuccessful
-                if((payload == " ") or (payload == "-1") or (payload == NULL) or (payload == "ERROR")) {
+                if((payload == " ") or (payload == "-1") or (payload == NULL)) {
                         httpRequestError = true;
 
                         lostServerConnection = true;
@@ -618,24 +555,8 @@ void httpRequestCallback() {
                         tHttpRequestParser.disable();
                         tParsedDataToRegularSlaveUnitVariables.disable();
 
-                        if(enableDebugging) {
-                                // A line break for more readibility
-                                Serial.println(" ");
-
-                                Serial.print("Server addres:");
-                                Serial.println(serverAddreess);
-
-                                Serial.print("HTTP Query:");
-                                Serial.println(query);
-
-                                Serial.print("HTTP Response: ");
-                                Serial.println(payload);
-
-                                // A line break for more readibility
-                                Serial.println(" ");
-                        }
-
                         // A line break for more readibility
+                        Serial.println(" ");
                         Serial.print("Millis(): ");
                         Serial.println(millis());
                         Serial.println("////////////////////////////////");
@@ -668,13 +589,6 @@ void httpRequestCallback() {
                         tHttpRequestParser.enable();
                         tParsedDataToRegularSlaveUnitVariables.enable();
 
-
-                        if ((sensorDataTransferRequest) and (enableDebugging)) {
-                                Serial.println("Sent the sensor value to the server!");
-
-                                // A line break for more readibility
-                                Serial.println(" ");
-                        }
 
                         // Reverting back to the original value
                         sensorDataTransferRequest = false;
@@ -714,8 +628,6 @@ void httpRequestCallback() {
 
 }
 
-// Converts the string (in JSON format) gathered by the http request to regular
-//      arduino variables. So that they can be used in the rest of the code.
 void httpRequestParserCallback() {
 
         // If there are no problems with the http result continue, otherwise keep the
@@ -815,10 +727,6 @@ void httpRequestParserCallback() {
         }
 }
 
-// Does the conversation between the variables generated with the JSON parsing
-//      function parsedDataToRegularSlaveUnitVariablesCallback().
-// Convert the data types, checks the min and max values of the variables.
-// Basically, it does the housekeeping
 void parsedDataToRegularSlaveUnitVariablesCallback() {
 
         // If there are no problems with the http result continue, otherwise keep the
@@ -912,21 +820,15 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
 
 }
 
-// Updates the task manager intervals when changed in the database.
-// This function ensures that the intervals are changed properly without crashing
-//      the task manager and the whole system.
 void updateDataUpdateIntervalsCallback() {
 
         if(updateDataUpdateIntervals) {
                 updateDataUpdateIntervals = false;
 
-                // not the light sensor, the light device
                 if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
                         tRunLight.disable();
                         tRunLight.setInterval(dataUpdateInterval);
                         tRunLight.enable();
-
-                        // All sensors
                 } else if ((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
                         tRunSensor.disable();
                         tRunSensor.setInterval(dataUpdateInterval);
@@ -964,13 +866,6 @@ void updateDataUpdateIntervalsCallback() {
 
 }
 
-// Turns the connected fogger(s) ON and OFF based on the onDuration and offDuration
-//      gathered from the main server.
-// Has a resolution of 1 seconds, which means the function
-//      can change state only once per second. This resolution is more than
-//      enough for fogger(s) to operate properly.
-// Utilizes the updateTransistorPin() to turn on and off the fogger(s)
-// Connected to the transistorPin
 void runFoggerCallback() {
 
         unsigned long currentMillis = millis();
@@ -980,7 +875,7 @@ void runFoggerCallback() {
                 previousMillis = currentMillis;
 
                 if (deviceState) {
-                        // Fogger is currently on, set time to stay off
+                        // LED is currently on, set time to stay off
                         interval = offDuration;
                 } else {
                         // LED is currently off, set time to stay on
@@ -995,10 +890,6 @@ void runFoggerCallback() {
 
 }
 
-// Dims tha lights based on the transistorPinPwmValue gathered from the main server.
-// This function tries to dim lights smootly by gradually dimming.
-// Utilizes the updateTransistorPin() to apply the PWM values to the connected light(s).
-// Connected to the transistorPin
 void runLightCallback() {
 
         deviceState = HIGH;
@@ -1046,8 +937,7 @@ void runLightCallback() {
 
         } else if (previousTransistorPinPwmValue == transistorPinPwmValue) {
 
-                // some case that will be implemented in the future
-                //updateTransistorPin();
+                updateTransistorPin();
 
         }
 
@@ -1059,80 +949,59 @@ void runLightCallback() {
                 powerPercent = 0;
         }
 
-        updateTransistorPin();
-
         deviceIsEnabled = tempDeviceIsEnabled;
 
         previousTransistorPinPwmValue = transistorPinPwmValue;
 
 }
 
-// Connected to the transistorPin
-void runValveCallback() {
-
-        if (deviceIsEnabled == 0) {
-                deviceState = LOW;
-                transistorPinPwmValue = 0;
-        } else if (deviceIsEnabled == 1) {
-                deviceState = HIGH;
-        }
-
-        updateTransistorPin();
-
-}
-
-// Selects and runs the right sensor reading function based on the deviceType.
-// Triggers httpRequestCallback() to send the reading to the database.
 void runSensorCallback() {
-
-        if(enableDebugging) {
-
-                // A line break for more readibility
-                Serial.println(" ");
-
-                Serial.println("Reading the sensor value...");
-
-        }
 
         if((deviceType.indexOf("light") >= 0) or (deviceType.indexOf("LIGHT") >= 0) or (deviceType.indexOf("Light") >= 0)) {
 
+                if(enableDebugging) {
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("Reading the sensor value...");
+
+                }
+
                 // sensorReading is a "String", <i> for you information </i>
                 sensorReading = lightSensorReading();
+
+                if(enableDebugging) {
+
+                        Serial.println("Now sending to the server.");
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
 
                 sensorDataTransferRequest = true;
 
         } else if((deviceType.indexOf("pressure") >= 0) or (deviceType.indexOf("PRESSURE") >= 0) or (deviceType.indexOf("Pressure") >= 0)) {
 
+                if(enableDebugging) {
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("Reading the sensor value...");
+
+                }
+
                 // sensorReading is a "String", <i> for you information </i>
                 sensorReading = pressureSensorReading();
 
-                sensorDataTransferRequest = true;
+                if(enableDebugging) {
 
-        } else if((deviceType.indexOf("flow") >= 0) or (deviceType.indexOf("FLOW") >= 0) or (deviceType.indexOf("Flow") >= 0)) {
+                        Serial.println("Now sending to the server.");
 
-                // sensorReading is a "String", <i> for you information </i>
-                sensorReading = flowSensorReading();
-
-                sensorDataTransferRequest = true;
-
-        } else if((deviceType.indexOf("humidity") >= 0) or (deviceType.indexOf("HUMIDITY") >= 0) or (deviceType.indexOf("Humidity") >= 0)) {
-
-                // sensorReading is a "String", <i> for you information </i>
-                sensorReading = humiditySensorReading();
-
-                sensorDataTransferRequest = true;
-
-        } else if((deviceType.indexOf("ph") >= 0) or (deviceType.indexOf("PH") >= 0) or (deviceType.indexOf("Ph") >= 0)) {
-
-                // sensorReading is a "String", <i> for you information </i>
-                sensorReading = phSensorReading();
-
-                sensorDataTransferRequest = true;
-
-        } else if((deviceType.indexOf("ec") >= 0) or (deviceType.indexOf("EC") >= 0) or (deviceType.indexOf("Ec") >= 0)) {
-
-                // sensorReading is a "String", <i> for you information </i>
-                sensorReading = ecSensorReading();
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
 
                 sensorDataTransferRequest = true;
 
@@ -1153,15 +1022,8 @@ void runSensorCallback() {
 
         }
 
-        if((enableDebugging) and (sensorDataTransferRequest))  {
-
-                Serial.println("Now sending to the server.");
-
-        }
-
 }
 
-// Conected to I2C
 String lightSensorReading() {
 
         Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
@@ -1183,7 +1045,6 @@ String lightSensorReading() {
         return reading;
 }
 
-// Conected to I2C
 String pressureSensorReading() {
 
         String reading = "";
@@ -1206,238 +1067,6 @@ String pressureSensorReading() {
         return reading;
 }
 
-// THIS FUNCTION IS NOT READY
-String flowSensorReading() {
-
-        String reading = "";
-
-        reading = "sik";
-
-
-        return reading;
-}
-
-// Connected to oneWireInterfacePin
-String humiditySensorReading() {
-
-        String reading = "";
-
-        #define DHTPIN  oneWireInterfacePin
-
-        // Uncomment the type of sensor in use:
-        #define DHTTYPE           DHT11     // DHT 11
-        //#define DHTTYPE           DHT22     // DHT 22 (AM2302)
-        //#define DHTTYPE           DHT21     // DHT 21 (AM2301)
-
-        DHT_Unified dht(DHTPIN, DHTTYPE);
-
-        // Initialize device.
-        dht.begin();
-
-        // Get temperature event and print its value.
-        sensors_event_t event;
-        dht.temperature().getEvent(&event);
-
-        String temp = String(event.temperature);
-
-        // Get humidity event and print its value.
-        dht.humidity().getEvent(&event);
-
-        String hum = String(event.relative_humidity);
-
-        // Humidity + temperature
-        reading = hum + "_" + temp;
-
-        return reading;
-}
-
-// Connected to ADC to I2C converter
-String phSensorReading() {
-
-        int sensorPinOnADC = 0;
-
-        String reading = "";
-
-        // Based on https://www.dfrobot.com/wiki/index.php/PH_meter(SKU:_SEN0161)
-
-        //Store the average value of the sensor feedback
-        unsigned long int avgValue;
-        float b;
-        int buf[10],temp;
-
-        //Get 10 sample value from the sensor for smooth the value
-        for(int i=0; i<10; i++) {
-                buf[i] = getI2cAdcConverterValue(sensorPinOnADC);
-                delay(50);
-        }
-
-        //sort the analog from small to large
-        for(int i = 0; i < 9; i++) {
-                for(int j = i + 1; j < 10; j++) {
-                        if(buf[i] > buf[j]) {
-                                temp = buf[i];
-                                buf[i] = buf[j];
-                                buf[j] = temp;
-                        }
-                }
-        }
-
-        avgValue = 0;
-
-        //take the average value of 6 center sample
-        for(int i = 2; i < 8; i++) {
-                avgValue += buf[i];
-        }
-
-        //convert the analog into millivolt
-        float phValue = (float)avgValue * 5.0 / 1023.0 / 6.0;
-
-        //convert the millivolt into pH value
-        phValue = 3.5 * phValue;
-
-        reading = String(phValue);
-
-        return reading;
-}
-
-// Connected to ADC to I2C converter
-String ecSensorReading() {
-
-        int sensorPinOnADC = 0;
-        int sensorPinOnADC2 = 1;
-
-        String reading = "";
-
-        // Based on https://www.dfrobot.com/wiki/index.php/Analog_EC_Meter_SKU:DFR0300
-
-        //Store the average value of the sensor feedback
-        unsigned long int avgValue;
-        float b;
-        int buf[10],temp;
-
-        float temperature,ECcurrent;
-
-        // Get the temperature of the liquid
-        temperature = (dallasTemperatureSensor().toFloat());
-
-        //Get 10 sample value from the sensor for smooth the value
-        for(int i=0; i<10; i++) {
-                buf[i] = getI2cAdcConverterValue(sensorPinOnADC);
-                delay(50);
-        }
-
-        //sort the analog from small to large
-        for(int i = 0; i < 9; i++) {
-                for(int j = i + 1; j < 10; j++) {
-                        if(buf[i] > buf[j]) {
-                                temp = buf[i];
-                                buf[i] = buf[j];
-                                buf[j] = temp;
-                        }
-                }
-        }
-
-        avgValue = 0;
-
-        //take the average value of 6 center sample
-        for(int i = 2; i < 8; i++) {
-                avgValue += buf[i];
-        }
-
-        //convert the analog into millivolt
-        float averageVoltage = (float)avgValue * 5000 / 1023.0 / 6.0;
-
-        //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.0185*(fTP-25.0));
-        float TempCoefficient = 1.0 + 0.0185 * (temperature - 25.0);
-
-        float CoefficientVolatge=(float)averageVoltage/TempCoefficient;
-
-        if(CoefficientVolatge <= 448) {
-                //1ms/cm<EC<=3ms/cm
-                ECcurrent = 6.84 * CoefficientVolatge - 64.32;
-
-        } else if(CoefficientVolatge <= 1457) {
-                //3ms/cm<EC<=10ms/cm
-                ECcurrent = 6.98 * CoefficientVolatge - 127;
-
-        } else {
-                //10ms/cm<EC<20ms/cm
-                ECcurrent = 5.3 * CoefficientVolatge + 2278;
-        }
-
-        //convert us/cm to ms/cm
-        ECcurrent /= 1000;
-
-        reading = String(ECcurrent) + "_" + String(temperature);
-
-        return reading;
-}
-
-// Connected to oneWireInterfacePin
-String dallasTemperatureSensor() {
-
-        String reading = "";
-
-        // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
-        OneWire oneWire(oneWireInterfacePin);
-
-        // Pass our oneWire reference to Dallas Temperature.
-        DallasTemperature sensors(&oneWire);
-        // Start up the library
-        sensors.begin();
-
-        // call sensors.requestTemperatures() to issue a global temperature
-        // request to all devices on the bus
-        sensors.requestTemperatures(); // Send the command to get temperatures
-
-        // After we got the temperatures, we can print them here.
-        // We use the function ByIndex, and as an example get the temperature from the first sensor only.
-
-        reading = String(sensors.getTempCByIndex(0));
-
-        return reading;
-
-}
-
-// Reads the value ADC value at the given pin and converts to the 0 - 1023 range
-//      for the compability with current libraries that are based on the arduino
-//      analog input, which gives values between 0 and 1023 instead of 0 and 32767.
-int getI2cAdcConverterValue(int x){
-
-        Adafruit_ADS1115 ads; /* Use this for the 16-bit version */
-        //Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
-
-        ads.begin();
-
-        int16_t adc;
-
-        adc = ads.readADC_SingleEnded(x);
-
-        // Converting the reading to unsigned 10 bit value
-        adc = map(adc, -27100, 27100, -1023, 1023);
-
-        //    adc = map(adc, -1023, 1023, 0, 1023);
-
-        // Making sure that values are in the bounds
-        if(adc < 0) {
-                adc = 0;
-        }
-
-        if(adc > 1023) {
-                adc = 1023;
-        }
-
-        /*
-           float voltage = adc * (5.0 / 1023.0);
-           // write the voltage value to the serial monitor:
-           Serial.print("voltage: ");
-           Serial.println(voltage);
-         */
-
-        return adc;
-}
-
-// Turns ON or OFF the transistorPin based on the transistorPinPwmValue variable
 void updateTransistorPin() {
 
         // Simply, if the device shouldn't be turned off, turn off

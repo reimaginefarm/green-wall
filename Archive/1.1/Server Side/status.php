@@ -1,13 +1,12 @@
 <?php
 
 /*
-################################################
-# Team NYUAD, Green / Vaponic Wall Code v1.1.1 #
-# Server side code                             #
-# PHP 7.0                                      #
-# 2018                                         #
-# Author: woswos                               #
-################################################
+##############################################
+# Team NYUAD, Green / Vaponic Wall Code v1.1 #
+# Server side code / Status Page             #
+# PHP 7.0                                    #
+# 2018                                       #
+##############################################
 
                                               //^\\
                                           //^\\ #
@@ -29,7 +28,7 @@ if ($enableDebugging) {
     ini_set('html_errors', 'On');
 } else {
     error_reporting(0);
-    ini_set('display_errors', 0);
+    ini_set('display_errors',0);
     ini_set('html_errors', 'Off');
 }
 
@@ -76,21 +75,21 @@ function createRowsForDevices()
             echo " (";
             echo(time() - $row["lastCommunicatedOn"]);
             echo ")";
-        //echo "<br>    :)   ";
+            echo "<br>    :)   ";
         } elseif ((time() - $row["lastCommunicatedOn"]) >= 2*($row["dataUpdateInterval"])) {
             echo "<td bgcolor='#FF0000'>";
             echo $row["lastCommunicatedOn"];
             echo " (";
             echo(time() - $row["lastCommunicatedOn"]);
             echo ")";
-        //echo "<br>    :(   ";
+            echo "<br>    :(   ";
         } elseif ((time() - $row["lastCommunicatedOn"]) >= 1*($row["dataUpdateInterval"])) {
             echo "<td bgcolor='#FFA500'>";
             echo $row["lastCommunicatedOn"];
             echo " (";
             echo(time() - $row["lastCommunicatedOn"]);
             echo ")";
-            //echo "<br>    :|   ";
+            echo "<br>    :|   ";
         }
         echo "</td>";
         echo "<td>";
@@ -165,45 +164,12 @@ function createRowsForSensors()
         echo "</td>";
         echo "<td>";
         echo $row["reading1"];
-
-        if ($row["deviceType"] == "lightSensor") {
-            echo " lux";
-        } elseif ($row["deviceType"] == "pressureSensor") {
-            echo " hPa";
-        } elseif ($row["deviceType"] == "flowSensor") {
-            echo " L/min";
-        } elseif ($row["deviceType"] == "humiditySensor") {
-            echo " %";
-        } elseif ($row["deviceType"] == "phSensor") {
-            echo " pH";
-        } elseif ($row["deviceType"] == "ecSensor") {
-            echo " ms/cm";
-        }
-
         echo "</td>";
         echo "<td>";
         echo $row["reading2"];
-
-        if ($row["deviceType"] == "lightSensor") {
-        } elseif ($row["deviceType"] == "pressureSensor") {
-            echo " °C";
-        } elseif ($row["deviceType"] == "flowSensor") {
-        } elseif ($row["deviceType"] == "humiditySensor") {
-            echo " °C";
-        } elseif ($row["deviceType"] == "ecSensor") {
-            echo " °C";
-        }
-
         echo "</td>";
         echo "<td>";
         echo $row["reading3"];
-
-        if ($row["deviceType"] == "lightSensor") {
-        } elseif ($row["deviceType"] == "pressureSensor") {
-            echo " m";
-        } elseif ($row["deviceType"] == "flowSensor") {
-        } elseif ($row["deviceType"] == "humiditySensor") {
-        }
         echo "</td>";
         echo "</tr>";
     }

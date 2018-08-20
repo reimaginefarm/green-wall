@@ -1,13 +1,12 @@
 <?php
 
 /*
-################################################
-# Team NYUAD, Green / Vaponic Wall Code v1.1.1 #
-# Server side code                             #
-# PHP 7.0                                      #
-# 2018                                         #
-# Author: woswos                               #
-################################################
+##############################################
+# Team NYUAD, Green / Vaponic Wall Code v1.1 #
+# Server side code                           #
+# PHP 7.0                                    #
+# 2018                                       #
+##############################################
 
                                               //^\\
                                           //^\\ #
@@ -23,12 +22,7 @@ if ($enableDebugging) {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
     ini_set('html_errors', 'On');
-} else {
-    error_reporting(0);
-    ini_set('display_errors', 0);
-    ini_set('html_errors', 'Off');
 }
-
 
 date_default_timezone_set('Asia/Dubai');
 
@@ -80,7 +74,7 @@ if (!$error) {
             // Check if extra dim needs to be activated,
             // 0600 is 6 AM in the morning. So it check between these two times
             if (isNowInTimePeriod($row['extraDimAfterTime'], "0600")) {
-                $response['powerPercent'] = $response['powerPercent'] * 0.30;
+                $response['powerPercent'] = $response['powerPercent'] * 0.4;
             }
         } else {
             $response['deviceIsEnabled'] = 0;
@@ -100,20 +94,6 @@ if (!$error) {
     } elseif ($row['deviceType'] == "pressureSensor") {
         ///// Sensor
         printArrayAsJson($response);
-    } elseif ($row['deviceType'] == "flowSensor") {
-        ///// Sensor
-        printArrayAsJson($response);
-    } elseif ($row['deviceType'] == "humiditySensor") {
-        ///// Sensor
-        printArrayAsJson($response);
-    } elseif ($row['deviceType'] == "phSensor") {
-        ///// Sensor
-        printArrayAsJson($response);
-    } elseif ($row['deviceType'] == "ecSensor") {
-        ///// Sensor
-        printArrayAsJson($response);
-    } else {
-        echo 'ERROR';
     }
 } else {
     echo 'ERROR';
