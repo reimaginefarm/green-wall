@@ -2,7 +2,7 @@
 
 /*
 ################################################
-# Team NYUAD, Green / Vaponic Wall Code v1.3   #
+# Team NYUAD, Green / Vaponic Wall Code v1.2   #
 # Server side code                             #
 # PHP 7.0                                      #
 # 2018                                         #

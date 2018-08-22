@@ -1,6 +1,6 @@
 /*
  ################################################
- # Team NYUAD, Green / Vaponic Wall Code v1.3   #
+ # Team NYUAD, Green / Vaponic Wall Code v1.2   #
  # Slave module side code                       #
  # ESP8266 WIFI Module                          #
  # 2018                                         #
@@ -14,6 +14,8 @@
  #*#*#**#**#**#*#*#**#**#**#****#*#**#**#**#*#*#**#**#
  */
 
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
 // Default libraries
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -62,85 +64,53 @@
 
 // Defining the maximum avaliable pwm value for the pins of ESP8266
 #define PWMRANGE 1023
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
 
 
-
-/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//*//**/
-/**//* VARIABLES THAT NEEDS TO BE ADJUSTED BASED ON THE SLAVE UNIT CONFIGURATION *//**/
-/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//*//**/
-/**/
-/**/////////////////////////////////////////////////////////
-/**/// debugging vars begin:
-/**/ bool enableDebugging = true;
-/**/ bool enableSerialBanner = true;
-/**/// debugging vars end;
-/**/////////////////////////////////////////////////////////
-/**/
-/**/////////////////////////////////////////////////////////
-/**/// slave unit vars begin:
-/**/// Device type option: fogger, light, pump, valve,
-/**///                     lightSensor, pressureSensor, flowSensor, humiditySensor,
-/**///                     phSensor, ecSensor
-/**/// You can enter up to ten devices for now
-/**/// Please enter the device IDs in the same order that use use for device types
-/**/// Buraya cihazlarin yazildigi sira ayrica transistorPin'lere baglanma sirasini
-/**///     belirliyor. Yani ilk yazılan transistorPin'e baglanmali ve ikinci yazilan
-/**///     ise transistorPin2'ye baglanmis olmali >>>>>>>>> IMPORTANT <<<<<<<<<<
-/**/ const char* connectedDevices = "fogger, light, lightSensor, pressureSensor, humiditySensor";
-/**/ const char* connectedDeviceIds = "2, 2, 1, 1, 1";
-/**/ const char* slaveUnitId = "1";
-/**/
-/**/// The delimiter used to write device names. It is comma by default
-/**/// ' ' should be used, not " " to decorate the delimiter character >>>> IMPORTANT >>>>
-/**/ char delimiter = ',';
-/**/
-/**/// Transistor control pin
-/**/ const int transistorPin = 14;
-/**/ const int transistorPin2 = 15;
-/**/
-/**/// I2C Pins
-/**/ const int sdaPin = 5;   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bunları degistirmek simdilik bi ise yaramıyor
-/**/ const int sclPin = 4;
-/**///const int i2cAddressChangePin = 12;
-/**/
-/**/// One wire interface pin (for sensors that communicate over only one data)
-/**/// Data pin is the digital I/O pin, not the analog one
-/**/ int oneWireInterfacePin1 = 13;
-/**/ int oneWireInterfacePin2 = 12;
-/**/// slave unit vars end;
-/**/////////////////////////////////////////////////////////
-/**/
-/**/////////////////////////////////////////////////////////
-/**/// Update these with values suitable for your network.
-/**/// cnk vars begin:
-/**/ unsigned long currentTime;
-/**/ const char* ssid = "2.4g";
-/**/ const char* password = "dauyndauyn";
-/**/// cnk vars end;
-/**/////////////////////////////////////////////////////////
-/**/
-/**/////////////////////////////////////////////////////////
-/**/// http request vars begin:
-/**/ String masterHostName = "vaponicwalltestpi";
-/**/ String phpFile = "index.php";
-/**/// http request vars end;
-/**/////////////////////////////////////////////////////////
-/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//*//**/
-/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//*//**/
-
+bool enableDebugging = false;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+bool enableSerialBanner = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 
 
 ////////////////////////////////////////////////////////
 // slave unit vars begin:
+// Device type option: fogger, light, pump, valve,
+//                     lightSensor, pressureSensor, flowSensor, humiditySensor,
+//                     phSensor, ecSensor
+
+// You can enter up to ten devices for now
+// Please enter the device IDs in the same order that use use for device types
+const char* connectedDevices = "light, lightSensor, pressureSensor"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+const char* connectedDeviceIds = "2, 1, 1"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+
+// The delimiter used to write device names. It is comma by default
+// ' ' should be used, not " " to decorate the delimiter character >>>> IMPORTANT >>>>
+char delimiter = ',';  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+
+
 String deviceType[] = { " ", " ", " ", " ", " ", " ", " ", " ", " ", " "};
 String deviceId[] = { " ", " ", " ", " ", " ", " ", " ", " ", " ", " "};
 
+
 int totalNumberOfConnectedDevices = 0;
 int currentDevice = 0;
+int previousDevice = -1;
 
-// Variables to store data to run the code properly
-int indexOfFirstDevice = -1;
-int indexOfSecondDevice = -1;
+//////////////////////////const String deviceType = "pressureSensor, lightSensor";   //
+//////////////////////////const String deviceId = "1";
+
+// Transistor control pin
+const int transistorPin = 14;
+
+// I2C Pins
+const int sdaPin = 5;   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> bunları degistirmek simdilik bi ise yaramıyor
+const int sclPin = 4;
+//const int i2cAddressChangePin = 12;
+
+// One wire interface pin (for sensors that communicate over only one data)
+// Data pin is the digital I/O pin, not the analog one
+int oneWireInterfacePin = 13;
+int oneWireInterfacePin2 = 12;
 
 int transistorPinPwmValue[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int previousTransistorPinPwmValue[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -164,7 +134,20 @@ bool sensorDataTransferRequest = false;
 
 
 ////////////////////////////////////////////////////////
+// Update these with values suitable for your network.
+// cnk vars begin:
+unsigned long currentTime;
+const char* ssid = "2.4g";
+const char* password = "dauyndauyn";
+// cnk vars end;
+////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////
 // http request vars begin:
+String masterHostName = "vaponicwalltestpi";
+String phpFile = "index.php";
+
 String serverAddreess;
 String query;
 String payload = "-1";
@@ -190,8 +173,11 @@ unsigned long offDuration[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60};
 
 ////////////////////////////////////////////////////////
 // Callback prototypes for the task manager
+void httpRequestCallback();
+void httpRequestParserCallback();
+void parsedDataToRegularSlaveUnitVariablesCallback();
+void updateDataUpdateIntervalsCallback();
 void runFoggerCallback();
-void runFoggerDataUpdaterCallback();
 void runLightCallback();
 void runValveCallback();
 void runPumpCallback();
@@ -201,14 +187,16 @@ void runSensorCallback();
 
 ////////////////////////////////////////////////////////
 //Tasks
+Task tHttpRequest(1000, TASK_FOREVER, &httpRequestCallback);
+
+Task tHttpRequestParser(1000, TASK_FOREVER, &httpRequestParserCallback);
+
+Task tParsedDataToRegularSlaveUnitVariables(1000, TASK_FOREVER, &parsedDataToRegularSlaveUnitVariablesCallback);
+
+Task tUpdateDataUpdateIntervals(1000, TASK_FOREVER, &updateDataUpdateIntervalsCallback);
+
 // Fogger runs every seconds, so that it can run the run it on the seconds level (aka. resolution)
 Task tRunFogger(1000, TASK_FOREVER, &runFoggerCallback);
-
-// This task is special to the fogger because the tRunFogger task runs every second
-//     to change the state (turned off/on) of the fogger. I could include the data
-//     update functionality in it but it doesn't make sense to send queries to server
-//     about the state of the foggers. Thus, this task checks the data updates seperately
-Task tRunFoggerDataUpdater(1000, TASK_FOREVER, &runFoggerDataUpdaterCallback);
 
 Task tRunLight(1000, TASK_FOREVER, &runLightCallback);
 
@@ -230,12 +218,19 @@ Scheduler taskManager;
 //      setup functions in the required order.
 void setup() {
 
+        ////////////////////////////////////////////////////////
+        //////////////// SLAVE UNIT SETUP BEGIN ////////////////
+        ////////////////////////////////////////////////////////
         pinMode(transistorPin, OUTPUT);
         digitalWrite(transistorPin, LOW);
+        ////////////////////////////////////////////////////////
+        ////////////// SLAVE UNIT SETUP COMPLETE ///////////////
+        ////////////////////////////////////////////////////////
 
-        pinMode(transistorPin2, OUTPUT);
-        digitalWrite(transistorPin2, LOW);
 
+        ////////////////////////////////////////////////////////
+        //////////////// WIFI - OTA SETUP BEGIN ////////////////
+        ////////////////////////////////////////////////////////
         Serial.begin(115200);
 
         if(enableSerialBanner == true) {
@@ -246,12 +241,33 @@ void setup() {
 
         setupWifi(); // wifi cnk procedure;
         arduinoOTASetup();
+        ///////////////////////////////////////////////////////
+        ////////////// WIFI - OTA SETUP COMPLETE //////////////
+        ///////////////////////////////////////////////////////
+
+
+        ///////////////////////////////////////////////////////
+        ////////////////// SLAVE SETUP BEGIN //////////////////
+        ///////////////////////////////////////////////////////
 
         deviceTypesAndIdsSetup();
 
         slaveSetup();
 
+        ///////////////////////////////////////////////////////
+        //////////////// SLAVE SETUP COMPLETE /////////////////
+        ///////////////////////////////////////////////////////
+
+
+        ///////////////////////////////////////////////////////
+        ///////////// TASK MANAGER SETUP - BEGIN //////////////
+        ///////////////////////////////////////////////////////
+
         taskManagerSetup();
+
+        ///////////////////////////////////////////////////////
+        ////////// TASK MANAGER SETUP - COMPLETE //////////////
+        ///////////////////////////////////////////////////////
 
         currentDevice = 0;
 
@@ -430,9 +446,6 @@ void slaveSetup() {
 
         Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
 
-        // Read this function's explanation
-        assignTransistorPinsToDevices();
-
         // Loop through all devices
         for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
 
@@ -442,8 +455,12 @@ void slaveSetup() {
 
                 httpRequestCallback();
 
+                httpRequestParserCallback();
+
                 // Need to keep the device out of the inifite reboot loop
                 updateDataUpdateIntervals = false;
+
+                parsedDataToRegularSlaveUnitVariablesCallback();
 
                 if(httpRequestError == false) {
 
@@ -514,12 +531,61 @@ void taskManagerSetup() {
 
         bool alreadySetTheSensor = false;
 
+        Serial.println(" ");
+
         taskManager.init();
 
-        Serial.println(" ");
         Serial.println("////////////////////////////////////////////////////////////////////");
         Serial.println("//////////     *Initialized Scheduler (Task Manager)*     //////////");
         Serial.println("////////////////////////////////////////////////////////////////////");
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+        // THESE SHOULD BE UPDATED AT THE INTERVAL OF THE SMALLEST INTERVAL
+        // Get the smallest dataUpdateInterval time
+        int minValue = 0;
+        minValue = dataUpdateInterval[0];
+        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
+                if (dataUpdateInterval[i] < minValue) {
+                        minValue = dataUpdateInterval[i];
+                }
+        }
+
+        taskManager.addTask(tHttpRequest);
+        tHttpRequest.setInterval(minValue);
+        Serial.println("//////////           Added 'HTTP request' task            //////////");
+
+        tHttpRequest.enable();
+        Serial.println("//////////          Enabled 'HTTP request' task           //////////");
+        Serial.println("////////////////////////////////////////////////////////////////////");
+
+        ///
+        taskManager.addTask(tHttpRequestParser);
+        tHttpRequestParser.setInterval(minValue);
+        Serial.println("//////////       Added 'HTTP request parser' task         //////////");
+
+        tHttpRequestParser.enable();
+        Serial.println("//////////      Enabled 'HTTP request parser' task        //////////");
+        Serial.println("////////////////////////////////////////////////////////////////////");
+
+        ///
+        taskManager.addTask(tParsedDataToRegularSlaveUnitVariables);
+        tParsedDataToRegularSlaveUnitVariables.setInterval(minValue);
+        Serial.println("////  Added 'Parsed data to regular slave unit variables' task  ////");
+
+        tParsedDataToRegularSlaveUnitVariables.enable();
+        Serial.println("//// Enabled 'Parsed data to regular slave unit variables' task ////");
+        Serial.println("////////////////////////////////////////////////////////////////////");
+
+        ///
+        taskManager.addTask(tUpdateDataUpdateIntervals);
+        tUpdateDataUpdateIntervals.setInterval(minValue);
+        Serial.println("//////////   Added 'Update data update intervals' task    //////////");
+
+        tUpdateDataUpdateIntervals.enable();
+        Serial.println("//////////  Enabled 'Update data update intervals' task   //////////");
+        Serial.println("////////////////////////////////////////////////////////////////////");
+
 
         // Loop through all devices
         for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
@@ -533,15 +599,9 @@ void taskManagerSetup() {
                         taskManager.addTask(tRunFogger);
                         Serial.println("//////////            Added 'Run fogger' task             //////////");
 
-                        taskManager.addTask(tRunFoggerDataUpdater);
-                        tRunFoggerDataUpdater.setInterval(dataUpdateInterval[i]);
-                        Serial.println("//////////      Added 'Run fogger data updater' task      //////////");
-
                         tRunFogger.enable();
-                        Serial.println("//////////           Enabled 'Run fogger' task            //////////");
 
-                        tRunFoggerDataUpdater.enable();
-                        Serial.println("//////////     Enabled 'Run fogger data updater' task     //////////");
+                        Serial.println("//////////           Enabled 'Run fogger' task            //////////");
 
                 } else if ((deviceType[i] == "light") or (deviceType[i] == "LIGHT") or (deviceType[i] == "Light")) {
 
@@ -584,15 +644,12 @@ void taskManagerSetup() {
 
                 } else if ((deviceType[i].indexOf("Sensor") > 0) or (deviceType[i].indexOf("SENSOR") > 0) or (deviceType[i].indexOf("sensor") > 0)) {
 
-                        isSensor[i] = "1";
-
                         if(alreadySetTheSensor == false) {
 
-                                // Get the shortest data update interval among the sensors and set it as the data update interval for sensors
-                                int shortestSensorDataUpdateInterval = getShortestSensorDataUpdateInterval();
+                                isSensor[i] = "1";
 
                                 taskManager.addTask(tRunSensor);
-                                tRunSensor.setInterval(shortestSensorDataUpdateInterval);
+                                tRunSensor.setInterval(dataUpdateInterval[i]);
 
                                 Serial.println("//////////            Added 'Run sensor' task             //////////");
 
@@ -619,8 +676,8 @@ void camelArtAndBanner() {
         Serial.println(" ");
 
         Serial.println("################################################");
-        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.3   #");
-        Serial.println("# Slave module side code                       #");
+        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.2   #");
+        Serial.println("# Sleve module side code                       #");
         Serial.println("# ESP8266 WIFI Module                          #");
         Serial.println("# 2018                                         #");
         Serial.println("# Author: woswos                               #");
@@ -648,6 +705,19 @@ void httpRequestCallback() {
 
         // wait for WiFi connection
         if ((WiFi.status() == WL_CONNECTED)) {
+
+                // This function is used to make sure that same http query is made
+                //      twice for the same device
+                if(currentDevice == previousDevice) {
+                        currentDevice = currentDevice + 1;
+                }
+
+                // This function resets the current device when reached to the end
+                if (currentDevice > (totalNumberOfConnectedDevices-1)) {
+                        currentDevice = 0;
+                        previousDevice = -1;
+                }
+
 
                 HTTPClient http;
 
@@ -688,6 +758,10 @@ void httpRequestCallback() {
                         httpRequestError = true;
 
                         lostServerConnection = true;
+
+                        // Because there is nothing to parse
+                        tHttpRequestParser.disable();
+                        tParsedDataToRegularSlaveUnitVariables.disable();
 
                         if(enableDebugging) {
                                 // A line break for more readibility
@@ -738,6 +812,10 @@ void httpRequestCallback() {
                         httpRequestError = false;
 
 
+                        tHttpRequestParser.enable();
+                        tParsedDataToRegularSlaveUnitVariables.enable();
+
+
                         if ((sensorDataTransferRequest) and (enableDebugging)) {
                                 Serial.println("Sent the sensor value to the server!");
 
@@ -747,6 +825,8 @@ void httpRequestCallback() {
 
                         // Reverting back to the original value
                         sensorDataTransferRequest = false;
+
+                        previousDevice = currentDevice;
 
                         if(lostServerConnection == true) {
 
@@ -762,11 +842,6 @@ void httpRequestCallback() {
                                 Serial.println(" ");
                         }
 
-
-                        // If there are no problems parse the data retrieved from
-                        //      the server.
-                        httpRequestParserCallback();
-
                 }
 
         } else {
@@ -781,6 +856,9 @@ void httpRequestCallback() {
 
                 lostServerConnection == true;
 
+                // Because there is nothing to parse
+                tHttpRequestParser.disable();
+                tParsedDataToRegularSlaveUnitVariables.disable();
         }
 
 }
@@ -820,8 +898,11 @@ void httpRequestParserCallback() {
                 } else {
 
                         // If there is a problem, revert back to default values
+
                         onDuration[currentDevice] = 15;
+
                         offDuration[currentDevice] = 60;
+
                 }
 
 
@@ -870,9 +951,7 @@ void httpRequestParserCallback() {
                         Serial.println(" ");
                 }
 
-                // If there are no problems, convert the parsed variables
-                parsedDataToRegularSlaveUnitVariablesCallback();
-
+                tParsedDataToRegularSlaveUnitVariables.enable();
         } else {
 
                 if(enableDebugging) {
@@ -885,6 +964,7 @@ void httpRequestParserCallback() {
                         Serial.println(" ");
                 }
 
+                tParsedDataToRegularSlaveUnitVariables.disable();
         }
 }
 
@@ -989,7 +1069,7 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
 // This function ensures that the intervals are changed properly without crashing
 //      the task manager and the whole system.
 void updateDataUpdateIntervalsCallback() {
-/*
+
         if(updateDataUpdateIntervals) {
                 updateDataUpdateIntervals = false;
 
@@ -1044,8 +1124,8 @@ void updateDataUpdateIntervalsCallback() {
                 Serial.println("//////////////////////////////////");
                 Serial.println(" ");
         }
- */
-} //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+}
 
 // Turns the connected fogger(s) ON and OFF based on the onDuration and offDuration
 //      gathered from the main server.
@@ -1080,17 +1160,6 @@ void runFoggerCallback() {
 
 }
 
-// This task is special to the fogger because the tRunFogger task runs every second
-//     to change the state (turned off/on) of the fogger. I could include the data
-//     update functionality in it but it doesn't make sense to send queries to server
-//     about the state of the foggers. Thus, this task checks the data updates seperately
-void runFoggerDataUpdaterCallback() {
-
-        setCurrentDeviceTo("fogger");
-
-        httpRequestCallback();
-}
-
 // Dims tha lights based on the transistorPinPwmValue gathered from the main server.
 // This function tries to dim lights smootly by gradually dimming.
 // Utilizes the updateTransistorPin() to apply the PWM values to the connected light(s).
@@ -1098,10 +1167,6 @@ void runFoggerDataUpdaterCallback() {
 void runLightCallback() {
 
         setCurrentDeviceTo("light");
-
-        isSensor[currentDevice] = "0";
-
-        httpRequestCallback();
 
         deviceState[currentDevice] = HIGH;
 
@@ -1161,20 +1226,18 @@ void runLightCallback() {
                 powerPercent[currentDevice] = 0;
         }
 
-
         updateTransistorPin();
 
         deviceIsEnabled[currentDevice] = tempDeviceIsEnabled[currentDevice];
 
         previousTransistorPinPwmValue[currentDevice] = transistorPinPwmValue[currentDevice];
+
 }
 
 // Connected to the transistorPin
 void runValveCallback() {
 
         setCurrentDeviceTo("valve");
-
-        httpRequestCallback();
 
         if (deviceIsEnabled[currentDevice] == 0) {
                 deviceState[currentDevice] = LOW;
@@ -1192,8 +1255,6 @@ void runPumpCallback() {
 
         setCurrentDeviceTo("pump");
 
-        httpRequestCallback();
-
         if (deviceIsEnabled[currentDevice] == 0) {
                 deviceState[currentDevice] = LOW;
                 transistorPinPwmValue[currentDevice] = 0;
@@ -1209,148 +1270,96 @@ void runPumpCallback() {
 // Triggers httpRequestCallback() to send the reading to the database.
 void runSensorCallback() {
 
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
+        if(enableDebugging) {
 
-                // If the selected device is a sensor, go ahead!
-                if((isSensor[i] == "1") and (deviceIsEnabled[i] == 1 )) {
+                // A line break for more readibility
+                Serial.println(" ");
 
-                        sensorDataTransferRequest = false;
+                Serial.println("Reading the sensor value...");
 
-                        if(enableDebugging) {
+        }
 
-                                // A line break for more readibility
-                                Serial.println(" ");
-                                Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
+        if((deviceType[currentDevice].indexOf("light") >= 0) or (deviceType[currentDevice].indexOf("LIGHT") >= 0) or (deviceType[currentDevice].indexOf("Light") >= 0)) {
 
+                // sensorReading is a "String", <i> for you information </i>
+                setCurrentDeviceTo("lightSensor");
 
-                        }
+                sensorReading[currentDevice] = lightSensorReading();
 
-                        if((deviceType[i].indexOf("light") >= 0) or (deviceType[i].indexOf("LIGHT") >= 0) or (deviceType[i].indexOf("Light") >= 0)) {
+                sensorDataTransferRequest = true;
 
-                                // sensorReading is a "String", <i> for you information </i>
-                                setCurrentDeviceTo("lightSensor");
+        } else if((deviceType[currentDevice].indexOf("pressure") >= 0) or (deviceType[currentDevice].indexOf("PRESSURE") >= 0) or (deviceType[currentDevice].indexOf("Pressure") >= 0)) {
 
-                                if(enableDebugging) {
+                // sensorReading is a "String", <i> for you information </i>
+                setCurrentDeviceTo("pressureSensor");
 
-                                        Serial.println("Reading the sensor value...");
+                sensorReading[currentDevice] = pressureSensorReading();
 
-                                }
+                sensorDataTransferRequest = true;
 
-                                sensorReading[i] = lightSensorReading();
+        } else if((deviceType[currentDevice].indexOf("flow") >= 0) or (deviceType[currentDevice].indexOf("FLOW") >= 0) or (deviceType[currentDevice].indexOf("Flow") >= 0)) {
 
-                                sensorDataTransferRequest = true;
+                // sensorReading is a "String", <i> for you information </i>
+                setCurrentDeviceTo("flowSensor");
 
-                        } else if((deviceType[i].indexOf("pressure") >= 0) or (deviceType[i].indexOf("PRESSURE") >= 0) or (deviceType[i].indexOf("Pressure") >= 0)) {
+                sensorReading[currentDevice] = flowSensorReading();
 
-                                // sensorReading is a "String", <i> for you information </i>
-                                setCurrentDeviceTo("pressureSensor");
+                sensorDataTransferRequest = true;
 
-                                if(enableDebugging) {
+        } else if((deviceType[currentDevice].indexOf("humidity") >= 0) or (deviceType[currentDevice].indexOf("HUMIDITY") >= 0) or (deviceType[currentDevice].indexOf("Humidity") >= 0)) {
 
-                                        Serial.println("Reading the sensor value...");
+                // sensorReading is a "String", <i> for you information </i>
 
-                                }
+                setCurrentDeviceTo("humiditySensor");
 
-                                sensorReading[i] = pressureSensorReading();
+                sensorReading[currentDevice] = humiditySensorReading();
 
-                                sensorDataTransferRequest = true;
+                sensorDataTransferRequest = true;
 
-                        } else if((deviceType[i].indexOf("flow") >= 0) or (deviceType[i].indexOf("FLOW") >= 0) or (deviceType[i].indexOf("Flow") >= 0)) {
+        } else if((deviceType[currentDevice].indexOf("ph") >= 0) or (deviceType[currentDevice].indexOf("PH") >= 0) or (deviceType[currentDevice].indexOf("Ph") >= 0)) {
 
-                                // sensorReading is a "String", <i> for you information </i>
-                                setCurrentDeviceTo("flowSensor");
+                // sensorReading is a "String", <i> for you information </i>
+                setCurrentDeviceTo("phSensor");
 
-                                if(enableDebugging) {
+                sensorReading[currentDevice] = phSensorReading();
 
-                                        Serial.println("Reading the sensor value...");
+                sensorDataTransferRequest = true;
 
-                                }
+        } else if((deviceType[currentDevice].indexOf("ec") >= 0) or (deviceType[currentDevice].indexOf("EC") >= 0) or (deviceType[currentDevice].indexOf("Ec") >= 0)) {
 
-                                sensorReading[i] = flowSensorReading();
+                // sensorReading is a "String", <i> for you information </i>
+                setCurrentDeviceTo("ecSensor");
 
-                                sensorDataTransferRequest = true;
+                sensorReading[currentDevice] = ecSensorReading();
 
-                        } else if((deviceType[i].indexOf("humidity") >= 0) or (deviceType[i].indexOf("HUMIDITY") >= 0) or (deviceType[i].indexOf("Humidity") >= 0)) {
+                sensorDataTransferRequest = true;
 
-                                // sensorReading is a "String", <i> for you information </i>
-                                setCurrentDeviceTo("humiditySensor");
+        } else {
 
-                                if(enableDebugging) {
+                sensorDataTransferRequest = false;
 
-                                        Serial.println("Reading the sensor value...");
+                if(enableDebugging) {
 
-                                }
+                        // A line break for more readibility
+                        Serial.println(" ");
 
-                                sensorReading[i] = humiditySensorReading();
+                        Serial.println("I am not a sensor, how did I end up executing the sensor function?");
 
-                                sensorDataTransferRequest = true;
-
-                        } else if((deviceType[i].indexOf("ph") >= 0) or (deviceType[i].indexOf("PH") >= 0) or (deviceType[i].indexOf("Ph") >= 0)) {
-
-                                // sensorReading is a "String", <i> for you information </i>
-                                setCurrentDeviceTo("phSensor");
-
-                                if(enableDebugging) {
-
-                                        Serial.println("Reading the sensor value...");
-
-                                }
-
-                                sensorReading[i] = phSensorReading();
-
-                                sensorDataTransferRequest = true;
-
-                        } else if((deviceType[i].indexOf("ec") >= 0) or (deviceType[i].indexOf("EC") >= 0) or (deviceType[i].indexOf("Ec") >= 0)) {
-
-                                // sensorReading is a "String", <i> for you information </i>
-                                setCurrentDeviceTo("ecSensor");
-
-                                if(enableDebugging) {
-
-                                        Serial.println("Reading the sensor value...");
-
-                                }
-
-                                sensorReading[i] = ecSensorReading();
-
-                                sensorDataTransferRequest = true;
-
-                        } else {
-
-                                sensorDataTransferRequest = false;
-
-                                if(enableDebugging) {
-
-                                        // A line break for more readibility
-                                        Serial.println(" ");
-
-                                        Serial.println("I am not a sensor, how did I end up executing the sensor function?");
-
-                                        // A line break for more readibility
-                                        Serial.println(" ");
-                                }
-
-                        }
-
-                        if(sensorDataTransferRequest) {
-
-                                if(enableDebugging) {
-                                        Serial.println("Now sending to the server.");
-                                }
-
-                                httpRequestCallback();
-
-                                sensorDataTransferRequest = false;
-
-                                if(enableDebugging) {
-                                        Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
-                                        Serial.println(" ");
-                                }
-
-                        }
+                        // A line break for more readibility
+                        Serial.println(" ");
                 }
 
         }
+
+        if(sensorDataTransferRequest) {
+
+                if(enableDebugging) {
+                        Serial.println("Now sending to the server.");
+                }
+
+                httpRequestCallback();
+        }
+
 }
 
 // Turns ON or OFF the transistorPin based on the transistorPinPwmValue variable
@@ -1359,7 +1368,7 @@ void updateTransistorPin() {
         // Simply, if the device shouldn't be turned off, turn off
         if((deviceIsEnabled[currentDevice] == 0) or (powerPercent[currentDevice] == 0) or (deviceState[currentDevice] == LOW)) {
 
-                digitalWrite(getTransistorPin(currentDevice), LOW);
+                digitalWrite(transistorPin, LOW);
 
                 if(enableDebugging) {
                         // A line break for more readibility
@@ -1374,7 +1383,7 @@ void updateTransistorPin() {
                 // Simply, if the device should be turned on, turn on
         } else if ((deviceIsEnabled[currentDevice] == 1) and (powerPercent[currentDevice] != 0) and (deviceState[currentDevice] == HIGH)) {
 
-                analogWrite(getTransistorPin(currentDevice), transistorPinPwmValue[currentDevice]);
+                analogWrite(transistorPin, transistorPinPwmValue[currentDevice]);
 
                 if(enableDebugging) {
                         // A line break for more readibility
@@ -1420,21 +1429,6 @@ void setCurrentDeviceTo(String deviceTypeName) {
                 // A line break for more readibility
                 Serial.println(" ");
         }
-}
-
-// Print all connected devices with their ids, names, and sensor classification
-void printDevices() {
-
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
-                Serial.print("Device Type: ");
-                Serial.println(deviceType[i]);
-                Serial.print("Device ID: ");
-                Serial.println(deviceId[i]);
-                Serial.print("isSensor: ");
-                Serial.println(isSensor[i]);
-                Serial.println(" ");
-        }
-
 }
 
 // Conected to I2C
@@ -1493,12 +1487,12 @@ String flowSensorReading() {
         return reading;
 }
 
-// Connected to oneWireInterfacePin1
+// Connected to oneWireInterfacePin
 String humiditySensorReading() {
 
         String reading = "";
 
-        #define DHTPIN  oneWireInterfacePin1
+        #define DHTPIN  oneWireInterfacePin
 
         // Uncomment the type of sensor in use:
         #define DHTTYPE           DHT11     // DHT 11
@@ -1649,13 +1643,13 @@ String ecSensorReading() {
         return reading;
 }
 
-// Connected to oneWireInterfacePin1
+// Connected to oneWireInterfacePin
 String dallasTemperatureSensor() {
 
         String reading = "";
 
         // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
-        OneWire oneWire(oneWireInterfacePin1);
+        OneWire oneWire(oneWireInterfacePin);
 
         // Pass our oneWire reference to Dallas Temperature.
         DallasTemperature sensors(&oneWire);
@@ -1719,67 +1713,6 @@ int countChars(const char* string, char ch) {
         return count;
 }
 
-// Decide which device is the first and which device is the second
-void assignTransistorPinsToDevices() {
-
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
-
-                if ((deviceType[i] == "fogger") or (deviceType[i] == "light") or (deviceType[i] == "pump") or (deviceType[i] == "valve")) {
-
-                        if(indexOfFirstDevice == -1) {
-                                indexOfFirstDevice = i;
-                        } else if(indexOfSecondDevice == -1) {
-                                indexOfSecondDevice = i;
-                        }
-                }
-        }
-}
-
-int getTransistorPin(int givenDeviceId) {
-
-        int assignedDevicePin = transistorPin;
-
-        if(givenDeviceId == indexOfFirstDevice) {
-                assignedDevicePin = transistorPin;
-        } else if(givenDeviceId == indexOfSecondDevice) {
-                assignedDevicePin = transistorPin2;
-        }
-
-        return assignedDevicePin;
-}
-
-// Get the shortest dataUpdateInterval time among all connected devices
-int getShortestDataUpdateInterval() {
-
-        int minValue = 0;
-
-        minValue = dataUpdateInterval[0];
-
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
-                if (dataUpdateInterval[i] < minValue) {
-                        minValue = dataUpdateInterval[i];
-                }
-        }
-
-        return minValue;
-}
-
-// Get the shortest dataUpdateInterval time among the sensors
-int getShortestSensorDataUpdateInterval() {
-
-        // Get a reallllyyyy big integer to compare
-        int minValue = 999999999999999999999999999999999;
-
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
-                if ((dataUpdateInterval[i] < minValue) and (isSensor[i] == "1")) {
-                        minValue = dataUpdateInterval[i];
-                }
-        }
-
-        return minValue;
-
-}
-
 // Splits char array by the delimiter chara
 String getValue(String data, char separator, int index) {
         int found = 0;
@@ -1811,13 +1744,13 @@ void loop() {
 //***** That's all Folks! *****//
 // But first, one last ASCII art :)
 /*
-          __________________________
-         / _____________________  /|
-        / / ___________________/ / |
-       / / /| |               / /  |
-      / / / | |              / / . |
-     / / /| | |             / / /| |
-    / / / | | |            / / / | |
+         __________________________
+        / _____________________  /|
+       / / ___________________/ / |
+      / / /| |               / /  |
+     / / / | |              / / . |
+    / / /| | |             / / /| |
+   / / / | | |            / / / | |
    / / /  | | |           / / /| | |
    / /_/___| | |__________/ / / | | |
    /________| | |___________/ /  | | |
