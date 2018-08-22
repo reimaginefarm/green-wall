@@ -1,6 +1,6 @@
 /*
  ################################################
- # Team NYUAD, Green / Vaponic Wall Code v1.2   #
+ # Team NYUAD, Green / Vaponic Wall Code v1.1.1 #
  # Slave module side code                       #
  # ESP8266 WIFI Module                          #
  # 2018                                         #
@@ -68,7 +68,7 @@
 /**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
 
 
-bool enableDebugging = false;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+bool enableDebugging = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 bool enableSerialBanner = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 
 
@@ -77,27 +77,8 @@ bool enableSerialBanner = true;   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 // Device type option: fogger, light, pump, valve,
 //                     lightSensor, pressureSensor, flowSensor, humiditySensor,
 //                     phSensor, ecSensor
-
-// You can enter up to ten devices for now
-// Please enter the device IDs in the same order that use use for device types
-const char* connectedDevices = "light, lightSensor, pressureSensor"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
-const char* connectedDeviceIds = "2, 1, 1"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
-
-// The delimiter used to write device names. It is comma by default
-// ' ' should be used, not " " to decorate the delimiter character >>>> IMPORTANT >>>>
-char delimiter = ',';  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
-
-
-String deviceType[] = { " ", " ", " ", " ", " ", " ", " ", " ", " ", " "};
-String deviceId[] = { " ", " ", " ", " ", " ", " ", " ", " ", " ", " "};
-
-
-int totalNumberOfConnectedDevices = 0;
-int currentDevice = 0;
-int previousDevice = -1;
-
-//////////////////////////const String deviceType = "pressureSensor, lightSensor";   //
-//////////////////////////const String deviceId = "1";
+const String deviceType = "ecSensor";   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
+const String deviceId = "1"; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< CHANGE THESE VARIABLES
 
 // Transistor control pin
 const int transistorPin = 14;
@@ -112,21 +93,21 @@ const int sclPin = 4;
 int oneWireInterfacePin = 13;
 int oneWireInterfacePin2 = 12;
 
-int transistorPinPwmValue[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int previousTransistorPinPwmValue[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int tempDeviceIsEnabled[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+int transistorPinPwmValue = 0;
+int previousTransistorPinPwmValue = 0;
+int tempDeviceIsEnabled = 1;
 
-int deviceState[] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW};
-unsigned long previousMillis[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-unsigned long dataUpdateInterval[] = {10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000};  // in milliseconds
+int deviceState = LOW;
+unsigned long previousMillis = 0;
+unsigned long dataUpdateInterval = 10000; // in milliseconds
 long interval = 1000;
 
 // Enable either deepsleep or wifi off or none
-bool enableDeepSleep[] = {false, false, false, false, false, false, false, false, false, false};
-bool enableWifiOffWhenNotUsed[] = {false, false, false, false, false, false, false, false, false, false};
+bool enableDeepSleep = false;
+bool enableWifiOffWhenNotUsed = false;
 
-String isSensor[] = { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"};
-String sensorReading[] = { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"};
+String isSensor = "0";
+String sensorReading = "0";
 bool sensorDataTransferRequest = false;
 
 // slave unit vars end;
@@ -154,19 +135,19 @@ String payload = "-1";
 
 bool httpRequestError = true;
 bool updateDataUpdateIntervals = false;
-unsigned long previousServerDataUpdateInterval[] = {10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000};  // in milliseconds
+unsigned long previousServerDataUpdateInterval = dataUpdateInterval;
 bool lostServerConnection = false;
 
 // Default values
-int deviceIsEnabled[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int runOnlyOnce[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int powerPercent[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-unsigned long serverDataUpdateInterval[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int serverEnableDeepSleep[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int serverEnableWifiOffWhenNotUsed[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int deviceIsEnabled = 0;
+int runOnlyOnce = 1;
+int powerPercent = 0;
+unsigned long serverDataUpdateInterval = 1;
+int serverEnableDeepSleep = 0;
+int serverEnableWifiOffWhenNotUsed = 0;
 long serverCurrentUnixTime;
-unsigned long onDuration[] = {15, 15, 15, 15, 15, 15, 15, 15, 15, 15};
-unsigned long offDuration[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60};
+unsigned long onDuration = 15;
+unsigned long offDuration = 60;
 // http request vars end;
 ////////////////////////////////////////////////////////
 
@@ -187,24 +168,24 @@ void runSensorCallback();
 
 ////////////////////////////////////////////////////////
 //Tasks
-Task tHttpRequest(1000, TASK_FOREVER, &httpRequestCallback);
+Task tHttpRequest(dataUpdateInterval, TASK_FOREVER, &httpRequestCallback);
 
-Task tHttpRequestParser(1000, TASK_FOREVER, &httpRequestParserCallback);
+Task tHttpRequestParser(dataUpdateInterval, TASK_FOREVER, &httpRequestParserCallback);
 
-Task tParsedDataToRegularSlaveUnitVariables(1000, TASK_FOREVER, &parsedDataToRegularSlaveUnitVariablesCallback);
+Task tParsedDataToRegularSlaveUnitVariables(dataUpdateInterval, TASK_FOREVER, &parsedDataToRegularSlaveUnitVariablesCallback);
 
-Task tUpdateDataUpdateIntervals(1000, TASK_FOREVER, &updateDataUpdateIntervalsCallback);
+Task tUpdateDataUpdateIntervals(dataUpdateInterval, TASK_FOREVER, &updateDataUpdateIntervalsCallback);
 
 // Fogger runs every seconds, so that it can run the run it on the seconds level (aka. resolution)
 Task tRunFogger(1000, TASK_FOREVER, &runFoggerCallback);
 
-Task tRunLight(1000, TASK_FOREVER, &runLightCallback);
+Task tRunLight(dataUpdateInterval, TASK_FOREVER, &runLightCallback);
 
-Task tRunValve(1000, TASK_FOREVER, &runValveCallback);
+Task tRunValve(dataUpdateInterval, TASK_FOREVER, &runValveCallback);
 
-Task tRunPump(1000, TASK_FOREVER, &runPumpCallback);
+Task tRunPump(dataUpdateInterval, TASK_FOREVER, &runPumpCallback);
 
-Task tRunSensor(1000, TASK_FOREVER, &runSensorCallback);
+Task tRunSensor((dataUpdateInterval+1000), TASK_FOREVER, &runSensorCallback);
 
 Scheduler taskManager;
 ////////////////////////////////////////////////////////
@@ -250,8 +231,6 @@ void setup() {
         ////////////////// SLAVE SETUP BEGIN //////////////////
         ///////////////////////////////////////////////////////
 
-        deviceTypesAndIdsSetup();
-
         slaveSetup();
 
         ///////////////////////////////////////////////////////
@@ -260,16 +239,25 @@ void setup() {
 
 
         ///////////////////////////////////////////////////////
-        ///////////// TASK MANAGER SETUP - BEGIN //////////////
+        ////////// TASK MANAGER SETUP PART 1 - BEGIN //////////
         ///////////////////////////////////////////////////////
 
-        taskManagerSetup();
+        setupTaskManagerAddTasks();
 
         ///////////////////////////////////////////////////////
-        ////////// TASK MANAGER SETUP - COMPLETE //////////////
+        /////// TASK MANAGER SETUP PART 1 - COMPLETE //////////
         ///////////////////////////////////////////////////////
 
-        currentDevice = 0;
+
+        ///////////////////////////////////////////////////////
+        ///////// TASK MANAGER SETUP PART 2 - BEGIN ///////////
+        ///////////////////////////////////////////////////////
+
+        setupTaskManagerEnableTasks();
+
+        ///////////////////////////////////////////////////////
+        /////// TASK MANAGER SETUP PART 2 - COMPLETE //////////
+        ///////////////////////////////////////////////////////
 
         Serial.println(" ");
         Serial.print("Millis(): ");
@@ -285,7 +273,7 @@ void setup() {
 }
 
 // Sets  up the wifi network and ensures that the devices is connected to the
-//      network with the given SSID and password.
+//     network with the given SSID and password.
 void setupWifi() {
         // wifi network cnk begin:
         Serial.println();
@@ -297,7 +285,7 @@ void setupWifi() {
                 WiFi.persistent( false );
         }
 
-        WiFi.hostname("vaponicwall-" + String(deviceType[0]) + "-" + String(deviceId[0]));
+        WiFi.hostname("vaponicwall-" + deviceType + "-" + deviceId);
 
         WiFi.begin(ssid, password);
         while (WiFi.status() != WL_CONNECTED) {
@@ -324,7 +312,7 @@ void arduinoOTASetup() {
         // ArduinoOTA.setPort(8266);
 
         // Hostname defaults to esp8266-[ChipID]
-        String slaveHostName =  "vaponicwall " + deviceType[0] + " " + deviceId[0];
+        String slaveHostName =  "vaponicwall " + deviceType + " " + deviceId;
 
         // Length (with one extra character for the null terminator)
         int str_len = slaveHostName.length() + 1;
@@ -371,60 +359,6 @@ void arduinoOTASetup() {
 
 }
 
-// Splits the entered device types and IDs into deviceType[] and deviceId[]
-//      arrays.
-void deviceTypesAndIdsSetup() {
-
-        totalNumberOfConnectedDevices = countChars(connectedDevices, delimiter) + 1;
-
-        String tempDeviceType = "";
-        String tempDeviceId = "";
-
-        for(int i = 0; i < totalNumberOfConnectedDevices; i++) {
-
-                tempDeviceType = getValue(connectedDevices, delimiter, i);
-                tempDeviceId = getValue(connectedDeviceIds, delimiter, i);
-
-                // Check the first character of the string
-                if((tempDeviceType.charAt(0) == ' ') or (tempDeviceType.charAt(0) == delimiter)) {
-                        // Remove 1 characters starting at index=0
-                        // Simply remove the space character in the beginning
-                        tempDeviceType.remove(0, 1);
-                }
-
-                // Check the first character of the string
-                if((tempDeviceId.charAt(0) == ' ') or (tempDeviceId.charAt(0) == delimiter)) {
-                        // Remove 1 characters starting at index=0
-                        // Simply remove the space character in the beginning
-                        tempDeviceId.remove(0, 1);
-                }
-
-                // Check the last character of the string
-                if((tempDeviceType.charAt(tempDeviceType.length() - 1) == ' ') or (tempDeviceType.charAt(tempDeviceType.length() - 1) == delimiter)) {
-                        // Remove 1 characters starting at index=0
-                        // Simply remove the space character at the end
-                        tempDeviceType.remove(tempDeviceType.length() - 1, 1);
-                }
-
-                // Check the last character of the string
-                if((tempDeviceId.charAt(tempDeviceId.length() - 1) == ' ') or (tempDeviceId.charAt(tempDeviceId.length() - 1) == delimiter)) {
-                        // Remove 1 characters starting at index=0
-                        // Simply remove the space character at the end
-                        tempDeviceId.remove(tempDeviceId.length() - 1, 1);
-                }
-
-                // If user entered an extra comma at the end, fix it because it
-                //      will indicate more devices than actually there are.
-                if ((tempDeviceType == " ") or (tempDeviceType == "")) {
-                        totalNumberOfConnectedDevices = totalNumberOfConnectedDevices - 1;
-                } else {
-                        deviceType[i] = tempDeviceType;
-                        deviceId[i] = tempDeviceId;
-                }
-        }
-
-}
-
 // Gets the initial variables from the server and makes sure that the system is
 //      ready for the first run.
 void slaveSetup() {
@@ -434,237 +368,186 @@ void slaveSetup() {
         Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
         Serial.println("Connecting to server to get slave configuration");
         Serial.println("Please make sure that the following variables are correct for this slave device");
-        Serial.println(" ");
-
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
-                Serial.print("Device Type: ");
-                Serial.println(deviceType[i]);
-                Serial.print("Device ID: ");
-                Serial.println(deviceId[i]);
-                Serial.println(" ");
-        }
-
+        Serial.print("Device Type: ");
+        Serial.println(deviceType);
+        Serial.print("Device ID: ");
+        Serial.println(deviceId);
         Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
 
-        // Loop through all devices
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
+        httpRequestCallback();
 
-                Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
+        httpRequestParserCallback();
 
-                currentDevice = i;
+        // Need to keep the device out of the inifite reboot loop
+        updateDataUpdateIntervals = false;
 
-                httpRequestCallback();
+        parsedDataToRegularSlaveUnitVariablesCallback();
 
-                httpRequestParserCallback();
+        if(httpRequestError == false) {
 
-                // Need to keep the device out of the inifite reboot loop
-                updateDataUpdateIntervals = false;
+                // A line break for more readibility
+                Serial.println(" ");
 
-                parsedDataToRegularSlaveUnitVariablesCallback();
+                Serial.println("//////////////////////////////////");
+                Serial.print("Updated variables:");
+                Serial.println(" ");
 
-                if(httpRequestError == false) {
+                // Output to serial monitor
+                Serial.print("deviceIsEnabled:");
+                Serial.println(deviceIsEnabled);
 
-                        // A line break for more readibility
-                        Serial.println(" ");
+                Serial.print("runOnlyOnce:");
+                Serial.println(runOnlyOnce);
 
-                        Serial.println("//////////////////////////////////");
-                        Serial.print("Updated variables for ");
-                        Serial.print(deviceType[currentDevice]);
-                        Serial.print(" ");
-                        Serial.print(deviceId[currentDevice]);
-                        Serial.print(": ");
-                        Serial.println(" ");
+                Serial.print("powerPercent:");
+                Serial.println(powerPercent);
 
-                        // Output to serial monitor
-                        Serial.print("deviceIsEnabled:");
-                        Serial.println(deviceIsEnabled[currentDevice]);
+                Serial.print("onDuration (milliseconds):");
+                Serial.println(onDuration);
 
-                        Serial.print("runOnlyOnce:");
-                        Serial.println(runOnlyOnce[currentDevice]);
+                Serial.print("offDuration (milliseconds):");
+                Serial.println(offDuration);
 
-                        Serial.print("powerPercent:");
-                        Serial.println(powerPercent[currentDevice]);
+                Serial.print("serverDataUpdateInterval (milliseconds):");
+                Serial.println(dataUpdateInterval);
 
-                        Serial.print("onDuration (milliseconds):");
-                        Serial.println(onDuration[currentDevice]);
+                Serial.print("serverEnableDeepSleep:");
+                Serial.println(serverEnableDeepSleep);
 
-                        Serial.print("offDuration (milliseconds):");
-                        Serial.println(offDuration[currentDevice]);
+                Serial.print("serverEnableWifiOffWhenNotUsed:");
+                Serial.println(serverEnableWifiOffWhenNotUsed);
 
-                        Serial.print("serverDataUpdateInterval (milliseconds):");
-                        Serial.println(dataUpdateInterval[currentDevice]);
+                Serial.print("serverCurrentUnixTime:");
+                Serial.println(serverCurrentUnixTime);
 
-                        Serial.print("serverEnableDeepSleep:");
-                        Serial.println(serverEnableDeepSleep[currentDevice]);
+                Serial.println("//////////////////////////////////");
+                // A line break for more readibility
+                Serial.println(" ");
 
-                        Serial.print("serverEnableWifiOffWhenNotUsed:");
-                        Serial.println(serverEnableWifiOffWhenNotUsed[currentDevice]);
+        } else {
+                // A line break for more readibility
+                Serial.println(" ");
 
-                        Serial.print("serverCurrentUnixTime:");
-                        Serial.println(serverCurrentUnixTime);
+                Serial.println("///////////////////////////////////////////////////////////////////");
+                Serial.println("// Couldn't update variables due to the server connection error  //");
+                Serial.println("///////////////////////////////////////////////////////////////////");
 
-                        Serial.println("//////////////////////////////////");
-                        // A line break for more readibility
-                        Serial.println(" ");
-
-                } else {
-                        // A line break for more readibility
-                        Serial.println(" ");
-
-                        Serial.println("///////////////////////////////////////////////////////////////////");
-                        Serial.println("// Couldn't update variables due to the server connection error  //");
-                        Serial.println("///////////////////////////////////////////////////////////////////");
-
-                        // A line break for more readibility
-                        Serial.println(" ");
-
-                }
-
-                Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
+                // A line break for more readibility
+                Serial.println(" ");
 
         }
 
 }
 
-// Adds and enables the required tasks on the task manager.
-void taskManagerSetup() {
-
-        bool alreadySetTheSensor = false;
+// Adds all of the tasks delared to the task manager.
+void setupTaskManagerAddTasks() {
 
         Serial.println(" ");
 
+        Serial.println("////////////////////////////////////////////////////////////////////");
         taskManager.init();
+        Serial.println("*Initialized Scheduler (Task Manager)*");
 
-        Serial.println("////////////////////////////////////////////////////////////////////");
-        Serial.println("//////////     *Initialized Scheduler (Task Manager)*     //////////");
-        Serial.println("////////////////////////////////////////////////////////////////////");
-
-        ////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////
-        // THESE SHOULD BE UPDATED AT THE INTERVAL OF THE SMALLEST INTERVAL
-        // Get the smallest dataUpdateInterval time
-        int minValue = 0;
-        minValue = dataUpdateInterval[0];
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
-                if (dataUpdateInterval[i] < minValue) {
-                        minValue = dataUpdateInterval[i];
-                }
-        }
+        Serial.println(" ");
 
         taskManager.addTask(tHttpRequest);
-        tHttpRequest.setInterval(minValue);
-        Serial.println("//////////           Added 'HTTP request' task            //////////");
+        tHttpRequest.setInterval(dataUpdateInterval);
+        Serial.println("Added 'HTTP request' task");
+
+        taskManager.addTask(tHttpRequestParser);
+        tHttpRequestParser.setInterval(dataUpdateInterval);
+        Serial.println("Added 'HTTP request parser' task");
+
+        taskManager.addTask(tParsedDataToRegularSlaveUnitVariables);
+        tParsedDataToRegularSlaveUnitVariables.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Parsed data to regular slave unit variables' task");
+
+        taskManager.addTask(tUpdateDataUpdateIntervals);
+        tUpdateDataUpdateIntervals.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Update data update intervals' task");
+
+        taskManager.addTask(tRunFogger);
+        Serial.println("Added 'Run fogger' task");
+
+        taskManager.addTask(tRunLight);
+        tRunLight.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Run light' task");
+
+        taskManager.addTask(tRunValve);
+        tRunValve.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Run valve' task");
+
+        taskManager.addTask(tRunPump);
+        tRunPump.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Run pump' task");
+
+        taskManager.addTask(tRunSensor);
+        tRunSensor.setInterval(dataUpdateInterval);
+        Serial.println("Added 'Run sensor' task");
+        Serial.println("////////////////////////////////////////////////////////////////////");
+
+}
+
+// Only enables the required tasks on the task manager.
+void setupTaskManagerEnableTasks() {
+
+        Serial.println(" ");
+        Serial.println("////////////////////////////////////////////////////////////////////");
 
         tHttpRequest.enable();
-        Serial.println("//////////          Enabled 'HTTP request' task           //////////");
-        Serial.println("////////////////////////////////////////////////////////////////////");
-
-        ///
-        taskManager.addTask(tHttpRequestParser);
-        tHttpRequestParser.setInterval(minValue);
-        Serial.println("//////////       Added 'HTTP request parser' task         //////////");
+        Serial.println("Enabled 'HTTP request' task");
 
         tHttpRequestParser.enable();
-        Serial.println("//////////      Enabled 'HTTP request parser' task        //////////");
-        Serial.println("////////////////////////////////////////////////////////////////////");
-
-        ///
-        taskManager.addTask(tParsedDataToRegularSlaveUnitVariables);
-        tParsedDataToRegularSlaveUnitVariables.setInterval(minValue);
-        Serial.println("////  Added 'Parsed data to regular slave unit variables' task  ////");
+        Serial.println("Enabled 'HTTP request parser' task");
 
         tParsedDataToRegularSlaveUnitVariables.enable();
-        Serial.println("//// Enabled 'Parsed data to regular slave unit variables' task ////");
-        Serial.println("////////////////////////////////////////////////////////////////////");
-
-        ///
-        taskManager.addTask(tUpdateDataUpdateIntervals);
-        tUpdateDataUpdateIntervals.setInterval(minValue);
-        Serial.println("//////////   Added 'Update data update intervals' task    //////////");
+        Serial.println("Enabled 'Parsed data to regular slave unit variables' task");
 
         tUpdateDataUpdateIntervals.enable();
-        Serial.println("//////////  Enabled 'Update data update intervals' task   //////////");
-        Serial.println("////////////////////////////////////////////////////////////////////");
+        Serial.println("Enabled 'Update data update intervals' task");
 
+        if((deviceType == "fogger") or (deviceType == "FOGGER") or (deviceType == "Fogger")) {
 
-        // Loop through all devices
-        for (int i = 0; i < totalNumberOfConnectedDevices; i++) {
+                isSensor = "0";
 
+                tRunFogger.enable();
                 Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run fogger' task            //////////");
 
-                if((deviceType[i] == "fogger") or (deviceType[i] == "FOGGER") or (deviceType[i] == "Fogger")) {
+        } else if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
 
-                        isSensor[i] = "0";
+                isSensor = "0";
 
-                        taskManager.addTask(tRunFogger);
-                        Serial.println("//////////            Added 'Run fogger' task             //////////");
-
-                        tRunFogger.enable();
-
-                        Serial.println("//////////           Enabled 'Run fogger' task            //////////");
-
-                } else if ((deviceType[i] == "light") or (deviceType[i] == "LIGHT") or (deviceType[i] == "Light")) {
-
-                        isSensor[i] = "0";
-
-                        taskManager.addTask(tRunLight);
-                        tRunLight.setInterval(dataUpdateInterval[i]);
-
-                        Serial.println("//////////            Added 'Run light' task              //////////");
-
-                        tRunLight.enable();
-
-                        Serial.println("//////////           Enabled 'Run light' task             //////////");
-
-                } else if ((deviceType[i] == "valve") or (deviceType[i] == "VALVE") or (deviceType[i] == "Valve")) {
-
-                        isSensor[i] = "0";
-
-                        taskManager.addTask(tRunValve);
-                        tRunValve.setInterval(dataUpdateInterval[i]);
-
-                        Serial.println("//////////            Added 'Run valve' task             //////////");
-
-                        tRunValve.enable();
-
-                        Serial.println("//////////           Enabled 'Run valve' task            //////////");
-
-                } else if ((deviceType[i] == "pump") or (deviceType[i] == "PUMP") or (deviceType[i] == "Pump")) {
-
-                        isSensor[i] = "0";
-
-                        taskManager.addTask(tRunPump);
-                        tRunPump.setInterval(dataUpdateInterval[i]);
-
-                        Serial.println("//////////            Added 'Run pump' task             //////////");
-
-                        tRunPump.enable();
-
-                        Serial.println("//////////           Enabled 'Run pump' task            //////////");
-
-                } else if ((deviceType[i].indexOf("Sensor") > 0) or (deviceType[i].indexOf("SENSOR") > 0) or (deviceType[i].indexOf("sensor") > 0)) {
-
-                        if(alreadySetTheSensor == false) {
-
-                                isSensor[i] = "1";
-
-                                taskManager.addTask(tRunSensor);
-                                tRunSensor.setInterval(dataUpdateInterval[i]);
-
-                                Serial.println("//////////            Added 'Run sensor' task             //////////");
-
-                                tRunSensor.enable();
-
-                                Serial.println("//////////           Enabled 'Run sensor' task            //////////");
-
-                                alreadySetTheSensor = true;
-                        }
-
-                }
-
+                tRunLight.enable();
                 Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run light' task            //////////");
 
+        } else if ((deviceType == "valve") or (deviceType == "VALVE") or (deviceType == "Valve")) {
+
+                isSensor = "0";
+
+                tRunValve.enable();
+                Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run valve' task            //////////");
+
+        } else if ((deviceType == "pump") or (deviceType == "PUMP") or (deviceType == "Pump")) {
+
+                isSensor = "0";
+
+                tRunPump.enable();
+                Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run pump' task            //////////");
+
+        } else if ((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
+
+                isSensor = "1";
+
+                tRunSensor.enable();
+                Serial.println("////////////////////////////////////////////////////////////////////");
+                Serial.println("//////////           Enabled 'Run sensor' task            //////////");
         }
+
+        Serial.println("////////////////////////////////////////////////////////////////////");
 
 }
 
@@ -676,7 +559,7 @@ void camelArtAndBanner() {
         Serial.println(" ");
 
         Serial.println("################################################");
-        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.2   #");
+        Serial.println("# Team NYUAD, Green / Vaponic Wall Code v1.1.1 #");
         Serial.println("# Sleve module side code                       #");
         Serial.println("# ESP8266 WIFI Module                          #");
         Serial.println("# 2018                                         #");
@@ -706,19 +589,6 @@ void httpRequestCallback() {
         // wait for WiFi connection
         if ((WiFi.status() == WL_CONNECTED)) {
 
-                // This function is used to make sure that same http query is made
-                //      twice for the same device
-                if(currentDevice == previousDevice) {
-                        currentDevice = currentDevice + 1;
-                }
-
-                // This function resets the current device when reached to the end
-                if (currentDevice > (totalNumberOfConnectedDevices-1)) {
-                        currentDevice = 0;
-                        previousDevice = -1;
-                }
-
-
                 HTTPClient http;
 
                 serverAddreess = "http://" + masterHostName + "/" + phpFile;
@@ -734,10 +604,10 @@ void httpRequestCallback() {
                         deviceDataTransferRequest = "1";
                 } else {
                         deviceDataTransferRequest = "0";
-                        sensorReading[currentDevice] = "0";
+                        sensorReading = "0";
                 }
 
-                query = "deviceType=" + deviceType[currentDevice] + "&deviceId=" + deviceId[currentDevice] + "&deviceIp=" + WiFi.localIP().toString() + "&deviceDataTransferRequest=" + deviceDataTransferRequest + "&dataToTransfer=" + sensorReading[currentDevice];
+                query = "deviceType=" + deviceType + "&deviceId=" + deviceId + "&deviceIp=" + WiFi.localIP().toString() + "&deviceDataTransferRequest=" + deviceDataTransferRequest + "&dataToTransfer=" + sensorReading;
 
                 // For debugging
                 //Serial.println(query);
@@ -766,8 +636,6 @@ void httpRequestCallback() {
                         if(enableDebugging) {
                                 // A line break for more readibility
                                 Serial.println(" ");
-
-                                Serial.println("/////////////////////////////////////////////////////////////////////////////////////");
 
                                 Serial.print("Server addres:");
                                 Serial.println(serverAddreess);
@@ -826,8 +694,6 @@ void httpRequestCallback() {
                         // Reverting back to the original value
                         sensorDataTransferRequest = false;
 
-                        previousDevice = currentDevice;
-
                         if(lostServerConnection == true) {
 
                                 lostServerConnection = false;
@@ -879,29 +745,29 @@ void httpRequestParserCallback() {
 
                 JsonObject& root = jsonBuffer.parseObject(payload);
 
-                deviceIsEnabled[currentDevice] = root["deviceIsEnabled"]; // 0
-                runOnlyOnce[currentDevice] = root["runOnlyOnce"]; // 0
-                powerPercent[currentDevice] = root["powerPercent"]; // 100
-                serverDataUpdateInterval[currentDevice] = root["dataUpdateInterval"]; // 2
-                serverEnableDeepSleep[currentDevice] = root["enableDeepSleep"]; // 0
-                serverEnableWifiOffWhenNotUsed[currentDevice] = root["enableWifiOffWhenNotUsed"]; // 0
+                deviceIsEnabled = root["deviceIsEnabled"]; // 0
+                runOnlyOnce = root["runOnlyOnce"]; // 0
+                powerPercent = root["powerPercent"]; // 100
+                serverDataUpdateInterval = root["dataUpdateInterval"]; // 2
+                serverEnableDeepSleep = root["enableDeepSleep"]; // 0
+                serverEnableWifiOffWhenNotUsed = root["enableWifiOffWhenNotUsed"]; // 0
                 serverCurrentUnixTime = root["serverCurrentUnixTime"];                 // 1533838233
 
                 // Check if they are -1, they should be -1 if the device is a light
                 if ((root["onDuration"] > 0 ) and (root["offDuration"] > 0 )) {
 
-                        onDuration[currentDevice] = root["onDuration"];
+                        onDuration = root["onDuration"];
 
                         // convert seconds to milliseconds for millis()
-                        offDuration[currentDevice] = root["offDuration"];
+                        offDuration = root["offDuration"];
 
                 } else {
 
                         // If there is a problem, revert back to default values
 
-                        onDuration[currentDevice] = 15;
+                        onDuration = 15;
 
-                        offDuration[currentDevice] = 60;
+                        offDuration = 60;
 
                 }
 
@@ -912,37 +778,33 @@ void httpRequestParserCallback() {
                         // A line break for more readibility
                         Serial.println(" ");
 
-                        Serial.print("Parsed variables from HTTP response for ");
-                        Serial.print(deviceType[currentDevice]);
-                        Serial.print(" ");
-                        Serial.print(deviceId[currentDevice]);
-                        Serial.print(": ");
+                        Serial.print("Parsed variables from HTTP response:");
                         Serial.println(" ");
 
                         // Output to serial monitor
                         Serial.print("deviceIsEnabled:");
-                        Serial.println(deviceIsEnabled[currentDevice]);
+                        Serial.println(deviceIsEnabled);
 
                         Serial.print("runOnlyOnce:");
-                        Serial.println(runOnlyOnce[currentDevice]);
+                        Serial.println(runOnlyOnce);
 
                         Serial.print("powerPercent:");
-                        Serial.println(powerPercent[currentDevice]);
+                        Serial.println(powerPercent);
 
                         Serial.print("onDuration (seconds):");
-                        Serial.println(onDuration[currentDevice]);
+                        Serial.println(onDuration);
 
                         Serial.print("offDuration (seconds):");
-                        Serial.println(offDuration[currentDevice]);
+                        Serial.println(offDuration);
 
                         Serial.print("serverDataUpdateInterval (seconds):");
-                        Serial.println(serverDataUpdateInterval[currentDevice]);
+                        Serial.println(serverDataUpdateInterval);
 
                         Serial.print("serverEnableDeepSleep:");
-                        Serial.println(serverEnableDeepSleep[currentDevice]);
+                        Serial.println(serverEnableDeepSleep);
 
                         Serial.print("serverEnableWifiOffWhenNotUsed:");
-                        Serial.println(serverEnableWifiOffWhenNotUsed[currentDevice]);
+                        Serial.println(serverEnableWifiOffWhenNotUsed);
 
                         Serial.print("serverCurrentUnixTime:");
                         Serial.println(serverCurrentUnixTime);
@@ -983,12 +845,12 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
                 ///////////////////////////////////////////////////////
 
                 // Value mapping to PWM value for the power percent value
-                transistorPinPwmValue[currentDevice] = map(powerPercent[currentDevice], 0, 100, 0, 1023);
+                transistorPinPwmValue = map(powerPercent, 0, 100, 0, 1023);
 
                 // if the new value is same, don't update the value
-                if((not (dataUpdateInterval[currentDevice] == serverDataUpdateInterval[currentDevice]*1000)) and (serverDataUpdateInterval[currentDevice] > 0 )) {
+                if((not (dataUpdateInterval == serverDataUpdateInterval*1000)) and (serverDataUpdateInterval > 0 )) {
                         // convert seconds to milliseconds for millis()
-                        dataUpdateInterval[currentDevice] = serverDataUpdateInterval[currentDevice]*1000;
+                        dataUpdateInterval = serverDataUpdateInterval*1000;
 
                         updateDataUpdateIntervals = true;
 
@@ -999,7 +861,7 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
 
                         // In order to prevent any mistakes in the database to cause problems
                         // on the slave unit
-                        if(serverDataUpdateInterval[currentDevice] == 0 ) {
+                        if(serverDataUpdateInterval == 0 ) {
 
                                 // A line break for more readibility
                                 Serial.println(" ");
@@ -1018,24 +880,24 @@ void parsedDataToRegularSlaveUnitVariablesCallback() {
                 }
 
                 // convert seconds to milliseconds for millis()
-                onDuration[currentDevice] = (onDuration[currentDevice])*1000;
+                onDuration = (onDuration)*1000;
 
                 // convert seconds to milliseconds for millis()
-                offDuration[currentDevice] = (offDuration[currentDevice])*1000;
+                offDuration = (offDuration)*1000;
 
 
                 // Convert to boolean variable
-                if(serverEnableDeepSleep[currentDevice] == 1) {
-                        enableDeepSleep[currentDevice] = true;
-                } else if(serverEnableDeepSleep[currentDevice] == 0) {
-                        enableDeepSleep[currentDevice] = false;
+                if(serverEnableDeepSleep == 1) {
+                        enableDeepSleep = true;
+                } else if(serverEnableDeepSleep == 0) {
+                        enableDeepSleep = false;
                 }
 
                 // Convert to boolean variable
-                if(serverEnableWifiOffWhenNotUsed[currentDevice] == 1) {
-                        enableWifiOffWhenNotUsed[currentDevice] = true;
-                } else if(serverEnableWifiOffWhenNotUsed[currentDevice] == 0) {
-                        enableWifiOffWhenNotUsed[currentDevice] = false;
+                if(serverEnableWifiOffWhenNotUsed == 1) {
+                        enableWifiOffWhenNotUsed = true;
+                } else if(serverEnableWifiOffWhenNotUsed == 0) {
+                        enableWifiOffWhenNotUsed = false;
                 }
 
                 ///////////////////////////////////////////////////////
@@ -1074,25 +936,25 @@ void updateDataUpdateIntervalsCallback() {
                 updateDataUpdateIntervals = false;
 
                 // not the light sensor, the light device
-                if ((deviceType[currentDevice] == "light") or (deviceType[currentDevice] == "LIGHT") or (deviceType[currentDevice] == "Light")) {
+                if ((deviceType == "light") or (deviceType == "LIGHT") or (deviceType == "Light")) {
                         tRunLight.disable();
-                        tRunLight.setInterval(dataUpdateInterval[currentDevice]);
+                        tRunLight.setInterval(dataUpdateInterval);
                         tRunLight.enable();
 
-                } else if ((deviceType[currentDevice].indexOf("Valve") > 0) or (deviceType[currentDevice].indexOf("VALVE") > 0) or (deviceType[currentDevice].indexOf("valve") > 0)) {
+                } else if ((deviceType.indexOf("Valve") > 0) or (deviceType.indexOf("VALVE") > 0) or (deviceType.indexOf("valve") > 0)) {
                         tRunValve.disable();
-                        tRunValve.setInterval(dataUpdateInterval[currentDevice]);
+                        tRunValve.setInterval(dataUpdateInterval);
                         tRunValve.enable();
 
-                } else if ((deviceType[currentDevice].indexOf("Pump") > 0) or (deviceType[currentDevice].indexOf("PUMP") > 0) or (deviceType[currentDevice].indexOf("pump") > 0)) {
+                } else if ((deviceType.indexOf("Pump") > 0) or (deviceType.indexOf("PUMP") > 0) or (deviceType.indexOf("pump") > 0)) {
                         tRunPump.disable();
-                        tRunPump.setInterval(dataUpdateInterval[currentDevice]);
+                        tRunPump.setInterval(dataUpdateInterval);
                         tRunPump.enable();
 
-                } else if ((deviceType[currentDevice].indexOf("Sensor") > 0) or (deviceType[currentDevice].indexOf("SENSOR") > 0) or (deviceType[currentDevice].indexOf("sensor") > 0)) {
+                } else if ((deviceType.indexOf("Sensor") > 0) or (deviceType.indexOf("SENSOR") > 0) or (deviceType.indexOf("sensor") > 0)) {
                         // All sensors
                         tRunSensor.disable();
-                        tRunSensor.setInterval(dataUpdateInterval[currentDevice]);
+                        tRunSensor.setInterval(dataUpdateInterval);
                         tRunSensor.enable();
                 }
 
@@ -1101,10 +963,10 @@ void updateDataUpdateIntervalsCallback() {
                 tParsedDataToRegularSlaveUnitVariables.disable();
                 tUpdateDataUpdateIntervals.disable();
 
-                tHttpRequest.setInterval(dataUpdateInterval[currentDevice]);
-                tHttpRequestParser.setInterval(dataUpdateInterval[currentDevice]);
-                tParsedDataToRegularSlaveUnitVariables.setInterval(dataUpdateInterval[currentDevice]);
-                tUpdateDataUpdateIntervals.setInterval(dataUpdateInterval[currentDevice]);
+                tHttpRequest.setInterval(dataUpdateInterval);
+                tHttpRequestParser.setInterval(dataUpdateInterval);
+                tParsedDataToRegularSlaveUnitVariables.setInterval(dataUpdateInterval);
+                tUpdateDataUpdateIntervals.setInterval(dataUpdateInterval);
 
                 delay(500);
 
@@ -1136,24 +998,22 @@ void updateDataUpdateIntervalsCallback() {
 // Connected to the transistorPin
 void runFoggerCallback() {
 
-        setCurrentDeviceTo("fogger");
-
         unsigned long currentMillis = millis();
 
-        if (currentMillis - previousMillis[currentDevice] >= interval) {
+        if (currentMillis - previousMillis >= interval) {
                 // Save the current time to compare "later"
-                previousMillis[currentDevice] = currentMillis;
+                previousMillis = currentMillis;
 
-                if (deviceState[currentDevice]) {
+                if (deviceState) {
                         // Fogger is currently on, set time to stay off
-                        interval = offDuration[currentDevice];
+                        interval = offDuration;
                 } else {
                         // LED is currently off, set time to stay on
-                        interval = onDuration[currentDevice];
+                        interval = onDuration;
                 }
 
                 // Toggle the LED's state, Fancy, eh!?
-                deviceState[currentDevice] = !(deviceState[currentDevice]);
+                deviceState = !(deviceState);
         }
 
         updateTransistorPin();
@@ -1166,52 +1026,50 @@ void runFoggerCallback() {
 // Connected to the transistorPin
 void runLightCallback() {
 
-        setCurrentDeviceTo("light");
-
-        deviceState[currentDevice] = HIGH;
+        deviceState = HIGH;
 
         // In order to prevent direct shut down for lights
-        if (powerPercent[currentDevice] == 0) {
-                powerPercent[currentDevice] = 1;
+        if (powerPercent == 0) {
+                powerPercent = 1;
         }
 
-        tempDeviceIsEnabled[currentDevice]  = deviceIsEnabled[currentDevice];
+        tempDeviceIsEnabled  = deviceIsEnabled;
 
         // In order to prevent direct shut down for lights
-        if (deviceIsEnabled[currentDevice] == 0) {
-                deviceIsEnabled[currentDevice] = 1;
-                transistorPinPwmValue[currentDevice] = 1;
+        if (deviceIsEnabled == 0) {
+                deviceIsEnabled = 1;
+                transistorPinPwmValue = 1;
         }
 
         // Slowly adjust the voltage
-        if (previousTransistorPinPwmValue[currentDevice] < transistorPinPwmValue[currentDevice]) {
+        if (previousTransistorPinPwmValue < transistorPinPwmValue) {
 
-                int tempPwmValue = transistorPinPwmValue[currentDevice];
+                int tempPwmValue = transistorPinPwmValue;
 
-                for (int i = previousTransistorPinPwmValue[currentDevice]; i <= tempPwmValue; i = i + 10) {
+                for (int i = previousTransistorPinPwmValue; i <= tempPwmValue; i = i + 10) {
 
-                        transistorPinPwmValue[currentDevice] = i;
-
-                        delay(30);
-
-                        updateTransistorPin();
-                }
-
-        } else if (previousTransistorPinPwmValue[currentDevice] > transistorPinPwmValue[currentDevice]) {
-
-                int tempPwmValue = transistorPinPwmValue[currentDevice];
-
-                for (int i = previousTransistorPinPwmValue[currentDevice]; i >= tempPwmValue; i = i - 10) {
-
-                        transistorPinPwmValue[currentDevice] = i;
+                        transistorPinPwmValue = i;
 
                         delay(30);
 
                         updateTransistorPin();
                 }
 
+        } else if (previousTransistorPinPwmValue > transistorPinPwmValue) {
 
-        } else if (previousTransistorPinPwmValue[currentDevice] == transistorPinPwmValue[currentDevice]) {
+                int tempPwmValue = transistorPinPwmValue;
+
+                for (int i = previousTransistorPinPwmValue; i >= tempPwmValue; i = i - 10) {
+
+                        transistorPinPwmValue = i;
+
+                        delay(30);
+
+                        updateTransistorPin();
+                }
+
+
+        } else if (previousTransistorPinPwmValue == transistorPinPwmValue) {
 
                 // some case that will be implemented in the future
                 //updateTransistorPin();
@@ -1219,31 +1077,29 @@ void runLightCallback() {
         }
 
         // To prevent current leaks
-        if (transistorPinPwmValue[currentDevice] > 999 ) {
-                transistorPinPwmValue[currentDevice] = 1023;
-        } else if (transistorPinPwmValue[currentDevice] < 26 ) {
-                transistorPinPwmValue[currentDevice] = 0;
-                powerPercent[currentDevice] = 0;
+        if (transistorPinPwmValue > 999 ) {
+                transistorPinPwmValue = 1023;
+        } else if (transistorPinPwmValue < 26 ) {
+                transistorPinPwmValue = 0;
+                powerPercent = 0;
         }
 
         updateTransistorPin();
 
-        deviceIsEnabled[currentDevice] = tempDeviceIsEnabled[currentDevice];
+        deviceIsEnabled = tempDeviceIsEnabled;
 
-        previousTransistorPinPwmValue[currentDevice] = transistorPinPwmValue[currentDevice];
+        previousTransistorPinPwmValue = transistorPinPwmValue;
 
 }
 
 // Connected to the transistorPin
 void runValveCallback() {
 
-        setCurrentDeviceTo("valve");
-
-        if (deviceIsEnabled[currentDevice] == 0) {
-                deviceState[currentDevice] = LOW;
-                transistorPinPwmValue[currentDevice] = 0;
-        } else if (deviceIsEnabled[currentDevice] == 1) {
-                deviceState[currentDevice] = HIGH;
+        if (deviceIsEnabled == 0) {
+                deviceState = LOW;
+                transistorPinPwmValue = 0;
+        } else if (deviceIsEnabled == 1) {
+                deviceState = HIGH;
         }
 
         updateTransistorPin();
@@ -1253,13 +1109,11 @@ void runValveCallback() {
 // Connected to the transistorPin
 void runPumpCallback() {
 
-        setCurrentDeviceTo("pump");
-
-        if (deviceIsEnabled[currentDevice] == 0) {
-                deviceState[currentDevice] = LOW;
-                transistorPinPwmValue[currentDevice] = 0;
-        } else if (deviceIsEnabled[currentDevice] == 1) {
-                deviceState[currentDevice] = HIGH;
+        if (deviceIsEnabled == 0) {
+                deviceState = LOW;
+                transistorPinPwmValue = 0;
+        } else if (deviceIsEnabled == 1) {
+                deviceState = HIGH;
         }
 
         updateTransistorPin();
@@ -1279,58 +1133,45 @@ void runSensorCallback() {
 
         }
 
-        if((deviceType[currentDevice].indexOf("light") >= 0) or (deviceType[currentDevice].indexOf("LIGHT") >= 0) or (deviceType[currentDevice].indexOf("Light") >= 0)) {
+        if((deviceType.indexOf("light") >= 0) or (deviceType.indexOf("LIGHT") >= 0) or (deviceType.indexOf("Light") >= 0)) {
 
                 // sensorReading is a "String", <i> for you information </i>
-                setCurrentDeviceTo("lightSensor");
-
-                sensorReading[currentDevice] = lightSensorReading();
+                sensorReading = lightSensorReading();
 
                 sensorDataTransferRequest = true;
 
-        } else if((deviceType[currentDevice].indexOf("pressure") >= 0) or (deviceType[currentDevice].indexOf("PRESSURE") >= 0) or (deviceType[currentDevice].indexOf("Pressure") >= 0)) {
+        } else if((deviceType.indexOf("pressure") >= 0) or (deviceType.indexOf("PRESSURE") >= 0) or (deviceType.indexOf("Pressure") >= 0)) {
 
                 // sensorReading is a "String", <i> for you information </i>
-                setCurrentDeviceTo("pressureSensor");
-
-                sensorReading[currentDevice] = pressureSensorReading();
+                sensorReading = pressureSensorReading();
 
                 sensorDataTransferRequest = true;
 
-        } else if((deviceType[currentDevice].indexOf("flow") >= 0) or (deviceType[currentDevice].indexOf("FLOW") >= 0) or (deviceType[currentDevice].indexOf("Flow") >= 0)) {
+        } else if((deviceType.indexOf("flow") >= 0) or (deviceType.indexOf("FLOW") >= 0) or (deviceType.indexOf("Flow") >= 0)) {
 
                 // sensorReading is a "String", <i> for you information </i>
-                setCurrentDeviceTo("flowSensor");
-
-                sensorReading[currentDevice] = flowSensorReading();
+                sensorReading = flowSensorReading();
 
                 sensorDataTransferRequest = true;
 
-        } else if((deviceType[currentDevice].indexOf("humidity") >= 0) or (deviceType[currentDevice].indexOf("HUMIDITY") >= 0) or (deviceType[currentDevice].indexOf("Humidity") >= 0)) {
+        } else if((deviceType.indexOf("humidity") >= 0) or (deviceType.indexOf("HUMIDITY") >= 0) or (deviceType.indexOf("Humidity") >= 0)) {
 
                 // sensorReading is a "String", <i> for you information </i>
-
-                setCurrentDeviceTo("humiditySensor");
-
-                sensorReading[currentDevice] = humiditySensorReading();
+                sensorReading = humiditySensorReading();
 
                 sensorDataTransferRequest = true;
 
-        } else if((deviceType[currentDevice].indexOf("ph") >= 0) or (deviceType[currentDevice].indexOf("PH") >= 0) or (deviceType[currentDevice].indexOf("Ph") >= 0)) {
+        } else if((deviceType.indexOf("ph") >= 0) or (deviceType.indexOf("PH") >= 0) or (deviceType.indexOf("Ph") >= 0)) {
 
                 // sensorReading is a "String", <i> for you information </i>
-                setCurrentDeviceTo("phSensor");
-
-                sensorReading[currentDevice] = phSensorReading();
+                sensorReading = phSensorReading();
 
                 sensorDataTransferRequest = true;
 
-        } else if((deviceType[currentDevice].indexOf("ec") >= 0) or (deviceType[currentDevice].indexOf("EC") >= 0) or (deviceType[currentDevice].indexOf("Ec") >= 0)) {
+        } else if((deviceType.indexOf("ec") >= 0) or (deviceType.indexOf("EC") >= 0) or (deviceType.indexOf("Ec") >= 0)) {
 
                 // sensorReading is a "String", <i> for you information </i>
-                setCurrentDeviceTo("ecSensor");
-
-                sensorReading[currentDevice] = ecSensorReading();
+                sensorReading = ecSensorReading();
 
                 sensorDataTransferRequest = true;
 
@@ -1351,84 +1192,12 @@ void runSensorCallback() {
 
         }
 
-        if(sensorDataTransferRequest) {
+        if((enableDebugging) and (sensorDataTransferRequest))  {
 
-                if(enableDebugging) {
-                        Serial.println("Now sending to the server.");
-                }
-
-                httpRequestCallback();
-        }
-
-}
-
-// Turns ON or OFF the transistorPin based on the transistorPinPwmValue variable
-void updateTransistorPin() {
-
-        // Simply, if the device shouldn't be turned off, turn off
-        if((deviceIsEnabled[currentDevice] == 0) or (powerPercent[currentDevice] == 0) or (deviceState[currentDevice] == LOW)) {
-
-                digitalWrite(transistorPin, LOW);
-
-                if(enableDebugging) {
-                        // A line break for more readibility
-                        Serial.println(" ");
-
-                        Serial.println("Turned off the device because device is not enabled or power percent is 0");
-
-                        // A line break for more readibility
-                        Serial.println(" ");
-                }
-
-                // Simply, if the device should be turned on, turn on
-        } else if ((deviceIsEnabled[currentDevice] == 1) and (powerPercent[currentDevice] != 0) and (deviceState[currentDevice] == HIGH)) {
-
-                analogWrite(transistorPin, transistorPinPwmValue[currentDevice]);
-
-                if(enableDebugging) {
-                        // A line break for more readibility
-                        Serial.println(" ");
-
-                        Serial.print("Turned on the device. PWM value is ");
-                        Serial.println(transistorPinPwmValue[currentDevice]);
-
-                        // A line break for more readibility
-                        Serial.println(" ");
-                }
+                Serial.println("Now sending to the server.");
 
         }
 
-}
-
-void setCurrentDeviceTo(String deviceTypeName) {
-
-        // Find the index of the given device type name in the device type array
-        for(int i = 0; i < totalNumberOfConnectedDevices; i++) {
-                if(deviceType[i] == deviceTypeName) {
-                        // If the matching device is found, set current device
-                        //      to that index
-                        currentDevice = i;
-
-                        break;
-                }
-
-        }
-
-        if(enableDebugging) {
-                // A line break for more readibility
-                Serial.println(" ");
-
-                Serial.print("Current device is set to ");
-
-                Serial.print(deviceType[currentDevice]);
-
-                Serial.print(" ");
-
-                Serial.println(deviceId[currentDevice]);
-
-                // A line break for more readibility
-                Serial.println(" ");
-        }
 }
 
 // Conected to I2C
@@ -1707,29 +1476,44 @@ int getI2cAdcConverterValue(int x){
         return adc;
 }
 
-int countChars(const char* string, char ch) {
-        int count = 0;
-        for(; *string; count += (*string++ == ch));
-        return count;
-}
+// Turns ON or OFF the transistorPin based on the transistorPinPwmValue variable
+void updateTransistorPin() {
 
-// Splits char array by the delimiter chara
-String getValue(String data, char separator, int index) {
-        int found = 0;
-        int strIndex[] = { 0, -1 };
-        int maxIndex = data.length() - 1;
+        // Simply, if the device shouldn't be turned off, turn off
+        if((deviceIsEnabled == 0) or (powerPercent == 0) or (deviceState == LOW)) {
 
-        for (int i = 0; i <= maxIndex && found <= index; i++) {
-                if (data.charAt(i) == separator || i == maxIndex) {
-                        found++;
-                        strIndex[0] = strIndex[1] + 1;
-                        strIndex[1] = (i == maxIndex) ? i+1 : i;
+                digitalWrite(transistorPin, LOW);
+
+                if(enableDebugging) {
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.println("Turned off the device because device is not enabled or power percent is 0");
+
+                        // A line break for more readibility
+                        Serial.println(" ");
                 }
+
+                // Simply, if the device should be turned on, turn on
+        } else if ((deviceIsEnabled == 1) and (powerPercent != 0) and (deviceState == HIGH)) {
+
+                analogWrite(transistorPin, transistorPinPwmValue);
+
+                if(enableDebugging) {
+                        // A line break for more readibility
+                        Serial.println(" ");
+
+                        Serial.print("Turned on the device. PWM value is ");
+                        Serial.println(transistorPinPwmValue);
+
+                        // A line break for more readibility
+                        Serial.println(" ");
+                }
+
         }
-        return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+
 }
 
-// Main program loop
 void loop() {
 
         ArduinoOTA.handle();
@@ -1738,32 +1522,3 @@ void loop() {
         taskManager.execute();
 
 }
-
-
-//********** THE END **********//
-//***** That's all Folks! *****//
-// But first, one last ASCII art :)
-/*
-         __________________________
-        / _____________________  /|
-       / / ___________________/ / |
-      / / /| |               / /  |
-     / / / | |              / / . |
-    / / /| | |             / / /| |
-   / / / | | |            / / / | |
-   / / /  | | |           / / /| | |
-   / /_/___| | |__________/ / / | | |
-   /________| | |___________/ /  | | |
- | _______| | |__________ | |  | | |
- | | |    | | |_________| | |__| | |
- | | |    | |___________| | |____| |
- | | |   / / ___________| | |_  / /
- | | |  / / /           | | |/ / /
- | | | / / /            | | | / /
- | | |/ / /             | | |/ /
- | | | / /              | | ' /
- | | |/_/_______________| |  /
- | |____________________| | /
- |________________________|/
-
- */
