@@ -10,3 +10,5 @@ The system takes advantage of fogponics and the Internet of Things to increase g
 
 ## How it is different?
 Other vertical farming solutions are designed as inflexible megastructures, whether they come in the form of fixed racks of plants or remodelled shipping containers. On the contrary, the Green Wall allows vertical farming to occur at home or industrial campus, emphasizing the ability to resize and reshape, as well as allowing for the option to share data across communities local or international. Moreover, the Green Wall was developed to be equipped with replaceable and widely known components, eliminating any reliance on proprietary hardware or software. This allows for the system to be rebuilt with a completely different set of suppliers without any compromise in functionalities, championing adaptability. In short, the Green Wall is clean farming made modular and decentralized.
+
+![Features at a glance](images/banner-annotated.jpg)
