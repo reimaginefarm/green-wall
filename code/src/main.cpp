@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoOTA.h>
@@ -26,7 +27,7 @@ void setup() {
   Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer
 
   ArduinoOTA.setHostname("slaveUnit");
-  ArduinoOTA.setPassword("dauyndauyn");
+  //ArduinoOTA.setPassword("dauyndauyn");
 
   ArduinoOTA.onStart([]() {
     Serial.println("Start");
