@@ -3,7 +3,7 @@
 // Copyright (C) 2019 by reimagine.farm <contact at reimagine dot farm>
 
 #include <Arduino.h>
-#include "ota.hpp"
+#include "green-wall.hpp"
 
 using namespace std;
 
