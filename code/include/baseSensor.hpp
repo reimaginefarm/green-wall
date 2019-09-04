@@ -6,23 +6,26 @@
 #define BASE_SENSOR_HPP
 
 class BaseSensor{
-  private:
+  protected:
     uint address;
     int gain; //set to 1 in the constructor
 
   public:
     string name;
-    string id;
-    string version;
+    int id;
+    int version;
     float maximumValue;
     float minimumValue;
-    uint resolution;
+    float resolution;
+    int delay;
+    string unit;
 
     BaseSensor() {};
     ~BaseSensor() {};
 
-    float getMeasurement(int option=0) const {};
-    void setGain(int gain) {};
+    virtual float getMeasurement(int option=0) const = 0;
+    virtual void getEvent(int value) const = 0;
+    virtual void setGain(int gain) = 0;
 }
 
 #endif
