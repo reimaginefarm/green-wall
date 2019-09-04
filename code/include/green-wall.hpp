@@ -1,5 +1,5 @@
 // reimagine.farm
-// OTA MODULE
+// GREEN_WALL MODULE
 // Copyright (C) 2019 by reimagine.farm <contact at reimagine dot farm>
 
 #ifndef GREEN_WALL_HPP
