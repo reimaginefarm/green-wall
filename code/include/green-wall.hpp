@@ -5,6 +5,12 @@
 #ifndef GREEN_WALL_HPP
 #define GREEN_WALL_HPP
 
+// TSL2561 light sensor
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
+
+// Over the air updates
 #include "ota.hpp"
 
 #endif
