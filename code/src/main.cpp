@@ -9,11 +9,11 @@ using namespace std;
 
 const byte led = 2;
 
-TSL2561 temperatureSensor;
+//TSL2561 temperatureSensor;
 
 void setup() {
     Serial.begin(115200);
-    
+
     otaSetup();
 
     pinMode(led, OUTPUT);
@@ -32,6 +32,6 @@ void loop() {
     //     previousTime += diff;
     // }
 
-    Serial.println(temperatureSensor.getMeasurement());
+    //Serial.println(temperatureSensor.getMeasurement());
     Serial.println("test");
 }
