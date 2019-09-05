@@ -2,7 +2,7 @@
 // Lights (TSL2561) Class Implementation
 // Copyright (C) 2019 by reimagine.farm <contact at reimagine dot farm>
 
-#include "TSL2561.hpp"
+#include "include/sensors/TSL2561.hpp"
 
 
 TSL2561 ::  TSL2561() : name("light_sensor"), version(sensor.version),
