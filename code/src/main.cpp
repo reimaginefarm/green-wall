@@ -3,7 +3,7 @@
 // Copyright (C) 2019 by reimagine.farm <contact at reimagine dot farm>
 
 #include <Arduino.h>
-//#include "green-wall.hpp"
+#include "green-wall.hpp"
 
 using namespace std;
 
@@ -12,7 +12,6 @@ const byte led = 2;
 //TSL2561 temperatureSensor;
 
 void setup() {
-    Serial.begin(115200);
 
     otaSetup();
 
