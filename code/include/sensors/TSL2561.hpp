@@ -42,10 +42,11 @@ class TSL2561 : virtual class BaseSensor{
     Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
     sensor_t sensor;
 
-    TSL2561(){}
+    TSL2561();
 
     void configureSensor();
     void sensorSetup();
+    void getMeasurement();
 
 }
 

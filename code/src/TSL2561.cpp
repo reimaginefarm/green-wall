@@ -10,7 +10,7 @@ delay(sensor.min_delay), unit("lux"){
 
 };
 
-TSL2561 :: configureSensor() {
+void TSL2561 :: configureSensor() {
   /* You can also manually set the gain or enable auto-gain support */
   // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
   // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
@@ -22,11 +22,11 @@ TSL2561 :: configureSensor() {
   // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
 };
 
-TSL2561 :: sensorSetup() {
+void TSL2561 :: sensorSetup() {
   tsl.begin();
 };
 
-TSL2561 :: getMeasurement() {
+void TSL2561 :: getMeasurement() {
   sensors_event_t event;
   tsl.getEvent(&event);
   return event.light;
