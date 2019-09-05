@@ -13,4 +13,8 @@
 // Over the air updates
 #include "ota.hpp"
 
+// Sensors
+#include "baseSensor.hpp"
+#include "sensors/TSL2561.hpp"
+
 #endif

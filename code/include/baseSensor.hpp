@@ -7,10 +7,11 @@
 #ifndef BASE_SENSOR_HPP
 #define BASE_SENSOR_HPP
 
-class BaseSensor{
+class Sensor{
   protected:
     unsigned int address;
     int gain; //set to 1 in the constructor
+    float measurement;
 
   public:
     String name;
@@ -22,7 +23,7 @@ class BaseSensor{
     int delay;
     String unit;
 
-    BaseSensor(String initName, int initId, int initVersion, float initMaximumValue, float initMinimumValue, float initResolution, int initDelay, String initUnit) :
+    Sensor(String initName, int initId, int initVersion, float initMaximumValue, float initMinimumValue, float initResolution, int initDelay, String initUnit) :
             name(initName),
             version(initId),
             id(initVersion),
@@ -31,7 +32,7 @@ class BaseSensor{
             resolution(initResolution),
             delay(initDelay),
             unit(initUnit){};
-    ~BaseSensor() {};
+    ~Sensor() {};
 
     //virtual float getMeasurement(int option=0) const = 0;
     //virtual void getEvent(int value) const = 0;

@@ -9,7 +9,7 @@
 #include "../include/baseSensor.hpp"
 #include "../include/sensors/TSL2561.hpp"
 
-TSL2561 :: TSL2561() : BaseSensor("light_sensor", sensor.version, 1, sensor.max_value, sensor.min_value, sensor.resolution, sensor.min_delay, "lux"){
+TSL2561 :: TSL2561() : Sensor("light_sensor", sensor.version, 1, sensor.max_value, sensor.min_value, sensor.resolution, sensor.min_delay, "lux"){
 
 };
 
@@ -29,7 +29,7 @@ void TSL2561 :: sensorSetup() {
 };
 
 float TSL2561 :: getMeasurement() {
-  sensors_event_t event;
-  tsl.getEvent(&event);
-  return event.light;
+    sensors_event_t event;
+    tsl.getEvent(&event);
+    return event.light;
 };

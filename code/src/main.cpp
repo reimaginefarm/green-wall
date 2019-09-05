@@ -22,12 +22,14 @@ unsigned long previousTime = millis();
 const unsigned long interval = 1000;
 
 void loop() {
-  otaLoop();
-  unsigned long diff = millis() - previousTime;
-  if(diff > interval) {
-    digitalWrite(led, !digitalRead(led));  // Change the state of the LED
-    previousTime += diff;
-  }
+    otaLoop();
+    unsigned long diff = millis() - previousTime;
+    if(diff > interval) {
+        digitalWrite(led, !digitalRead(led));  // Change the state of the LED
+        previousTime += diff;
+    }
 
+    TSL2561 temperatureSensor;
 
+    Serial.println(temperatureSensor.getMeasurement());
 }
