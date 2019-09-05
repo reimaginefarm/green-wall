@@ -37,7 +37,11 @@
 // =======
 // 2013/JAN/31  - First version (KTOWN)
 
-class TSL2561 : virtual class BaseSensor{
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
+
+class TSL2561 : virtual BaseSensor{
   public:
     Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
     sensor_t sensor;

@@ -4,7 +4,6 @@
 
 #include "../include/sensors/TSL2561.hpp"
 
-
 TSL2561 ::  TSL2561() : name("light_sensor"), version(sensor.version),
 id(sensor.sensor_id), maximumValue(sensor.max_value),
 minimumValue(sensor.min_value), resolution(sensor.resolution),
