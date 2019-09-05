@@ -24,11 +24,11 @@ const unsigned long interval = 1000;
 
 void loop() {
     otaLoop();
-    unsigned long diff = millis() - previousTime;
-    if(diff > interval) {
-        digitalWrite(led, !digitalRead(led));  // Change the state of the LED
-        previousTime += diff;
-    }
+    // unsigned long diff = millis() - previousTime;
+    // if(diff > interval) {
+    //     digitalWrite(led, !digitalRead(led));  // Change the state of the LED
+    //     previousTime += diff;
+    // }
 
     Serial.println(temperatureSensor.getMeasurement());
     Serial.println("test");
