@@ -12,12 +12,6 @@ const byte led = 2;
 TSL2561 temperatureSensor;
 
 void setup() {
-
-    Serial.begin(115200);         // Start the Serial communication to send messages to the computer
-
-    Serial.println("test");
-
-
     otaSetup();
 
     pinMode(led, OUTPUT);
@@ -30,11 +24,11 @@ const unsigned long interval = 1000;
 
 void loop() {
     otaLoop();
-    // unsigned long diff = millis() - previousTime;
-    // if(diff > interval) {
-    //     digitalWrite(led, !digitalRead(led));  // Change the state of the LED
-    //     previousTime += diff;
-    // }
+    unsigned long diff = millis() - previousTime;
+    if(diff > interval) {
+        digitalWrite(led, !digitalRead(led));  // Change the state of the LED
+        previousTime += diff;
+    }
 
     Serial.println(temperatureSensor.getMeasurement());
     Serial.println("test");
