@@ -14,6 +14,10 @@ TSL2561 temperatureSensor;
 void setup() {
 
     Serial.begin(115200);         // Start the Serial communication to send messages to the computer
+
+    Serial.println("test");
+
+
     otaSetup();
 
     pinMode(led, OUTPUT);
