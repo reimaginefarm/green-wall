@@ -12,6 +12,8 @@ const byte led = 2;
 TSL2561 temperatureSensor;
 
 void setup() {
+    Serial.begin(115200);
+    
     otaSetup();
 
     pinMode(led, OUTPUT);
