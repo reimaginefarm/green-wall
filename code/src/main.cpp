@@ -33,5 +33,5 @@ void loop() {
     TSL2561 temperatureSensor;
 
     Serial.println(temperatureSensor.getMeasurement());
-    Serial.println("test";
+    Serial.println("test");
 }
