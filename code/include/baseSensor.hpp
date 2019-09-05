@@ -11,7 +11,6 @@ class Sensor{
   protected:
     unsigned int address;
     int gain; //set to 1 in the constructor
-    float measurement;
 
   public:
     String name;

@@ -11,10 +11,11 @@ const byte led = 2;
 
 void setup() {
 
-  otaSetup();
+    Serial.begin(115200);         // Start the Serial communication to send messages to the computer
+    otaSetup();
 
-  pinMode(led, OUTPUT);
-  digitalWrite(led, 1);
+    pinMode(led, OUTPUT);
+    digitalWrite(led, 1);
 }
 
 unsigned long previousTime = millis();

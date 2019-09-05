@@ -11,7 +11,7 @@ void otaSetup() {
 
   ESP8266WiFiMulti wifiMulti;     // Create an instance of the ESP8266WiFiMulti class, called 'wifiMulti'
 
-  Serial.begin(115200);         // Start the Serial communication to send messages to the computer
+  //Serial.begin(115200);         // Start the Serial communication to send messages to the computer
   delay(10);
   Serial.println('\n');
 
