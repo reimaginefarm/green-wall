@@ -6,13 +6,14 @@
 #include "greenWall.hpp"
 
 TSL2561 lightSensor;
+lightSensor.sensorSetup();
 
 unsigned long previousMillis = 0;
 const long interval = 5000;
 
 void setup() {
   otaSetup();
-  lightSensor.sensorSetup();
+
 }
 
 void loop() {
