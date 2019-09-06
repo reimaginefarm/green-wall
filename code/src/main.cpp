@@ -8,10 +8,11 @@
 TSL2561 lightSensor;
 
 unsigned long previousMillis = 0;
-const long interval = 1000;
+const long interval = 5000;
 
 void setup() {
   otaSetup();
+  lightSensor.sensorSetup();
 }
 
 void loop() {
