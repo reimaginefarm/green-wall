@@ -37,10 +37,7 @@
 // =======
 // 2013/JAN/31  - First version (KTOWN)
 
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_TSL2561_U.h>
-#include "../baseSensor.hpp"
+#include "baseSensor.hpp"
 
 class TSL2561 : virtual Sensor{
   public:

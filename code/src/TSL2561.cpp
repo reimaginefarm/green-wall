@@ -6,8 +6,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_TSL2561_U.h>
 
-#include "../include/baseSensor.hpp"
-#include "../include/sensors/TSL2561.hpp"
+#include "baseSensor.hpp"
+#include "TSL2561.hpp"
 
 TSL2561 :: TSL2561() : Sensor("light_sensor", sensor.version, 1, sensor.max_value, sensor.min_value, sensor.resolution, sensor.min_delay, "lux"){
 
@@ -30,6 +30,7 @@ void TSL2561 :: sensorSetup() {
 
 float TSL2561 :: getMeasurement() {
     sensors_event_t event;
+    tsl.setGain(TSL2561_GAIN_1X);
     tsl.getEvent(&event);
     return event.light;
 };
