@@ -46,7 +46,7 @@ class TSL2561 : virtual Sensor{
 
     TSL2561();
 
-    void sensorSetup();
+    void setup();
     float getMeasurement();
 
     //     /* If event.light = 0 lux the sensor is probably saturated

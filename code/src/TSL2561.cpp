@@ -13,7 +13,7 @@ TSL2561 :: TSL2561() : Sensor("light_sensor", sensor.version, 1, sensor.max_valu
 
 };
 
-void TSL2561 :: sensorSetup() {
+void TSL2561 :: setup() {
 
     /* You can also manually set the gain or enable auto-gain support */
     // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
@@ -30,7 +30,7 @@ void TSL2561 :: sensorSetup() {
 
 float TSL2561 :: getMeasurement() {
     sensors_event_t event;
-    tsl.setGain(TSL2561_GAIN_1X);
+    //tsl.setGain(TSL2561_GAIN_1X);
     tsl.getEvent(&event);
     return event.light;
 };
