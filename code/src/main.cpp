@@ -5,25 +5,36 @@
 #include <Arduino.h>
 #include "greenWall.hpp"
 
-TSL2561 lightSensor;
-lightSensor.sensorSetup();
+using namespace std;
 
-unsigned long previousMillis = 0;
-const long interval = 5000;
+int main() {
 
-void setup() {
-  otaSetup();
+    TSL2561 lightSensor;
+    lightSensor.sensorSetup();
+    lightSensor.getMeasurement();
 
+    unsigned long previousMillis = 0;
+    const long interval = 5000;
+
+    while (true) {
+
+        otaSetup();
+        otaLoop();
+
+        unsigned long currentMillis = millis();
+
+        if (currentMillis - previousMillis >= interval) {
+            previousMillis = currentMillis;
+            Serial.println("Light:");
+            Serial.println(lightSensor.getMeasurement());
+        }
+
+    }
+
+    return 0;
 }
 
-void loop() {
-  otaLoop();
-
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    Serial.println("Light:");
-    Serial.println(lightSensor.getMeasurement());
-  }
-
+void setup () {
+}
+void loop () {
 }
