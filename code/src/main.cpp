@@ -7,12 +7,21 @@
 
 TSL2561 lightSensor;
 
+unsigned long previousMillis = 0;
+const long interval = 1000;
+
 void setup() {
   otaSetup();
 }
 
 void loop() {
   otaLoop();
-  Serial.println("Light:");
-  Serial.println(lightSensor.getMeasurement());
+
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    Serial.println("Light:");
+    Serial.println(lightSensor.getMeasurement());
+  }
+
 }
