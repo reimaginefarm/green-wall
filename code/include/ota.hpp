@@ -5,6 +5,7 @@
 #ifndef OTA_HPP
 #define OTA_HPP
 
+void _setupWifi();
 void otaSetup();
 void otaLoop();
 

@@ -1,33 +1,30 @@
 // reimagine.farm
-// MAIN
+// MAIN MODULE
 // Copyright (C) 2019 by reimagine.farm <contact at reimagine dot farm>
 
 #include <Arduino.h>
-#include "ota.hpp"
+#include "greenWall.hpp"
 
-using namespace std;
+TSL2561 lightSensor;
 
-const byte led = 2;
+unsigned long previousMillis = 0;
+const long interval = 2000;
 
 void setup() {
-
-  otaSetup();
-
-  pinMode(led, OUTPUT);
-  digitalWrite(led, 1);
+    Serial.begin(115200);
+    otaSetup();
+    lightSensor.setup();
 }
 
-unsigned long previousTime = millis();
-
-const unsigned long interval = 1000;
-
 void loop() {
-  otaLoop();
-  unsigned long diff = millis() - previousTime;
-  if(diff > interval) {
-    digitalWrite(led, !digitalRead(led));  // Change the state of the LED
-    previousTime += diff;
-  }
 
+    otaLoop();
+
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+        Serial.println("Light:");
+        Serial.println(lightSensor.getMeasurement());
+    }
 
 }
